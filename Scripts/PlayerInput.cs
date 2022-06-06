@@ -10,7 +10,12 @@ namespace Bentengan
 
         [Export]
         private string _selectingTeamName;
+        [Export]
+        private bool _isRandom;
+
         private Arena _arena;
+        private AdversaryAgent _opponentAgent;
+        private AdversaryAgent _playerAgent;
 
         private List<int> _validMoveArea = new List<int>();
         private PersonPiece _personPieceSelected;
@@ -23,6 +28,9 @@ namespace Bentengan
             GD.Print("Ready: Player Input");
             _arena = GetNode<Arena>("../Arena");
             var cells = _arena.Cells;
+
+            _opponentAgent = GetNode<AdversaryAgent>("../Agents/OpponentAgent");
+            _playerAgent = GetNode<AdversaryAgent>("../Agents/PlayerAgent");
 
             foreach (Cell cell in cells)
             {
@@ -47,10 +55,15 @@ namespace Bentengan
 
         private void OnExecuteButtonClicked()
         {
-            _arena.UpdateAllPersonPieceLiveTime();
             
+            _opponentAgent.RegisterRandomMove();
+            if (_isRandom)
+                _playerAgent.RegisterRandomMove();
+
             _arena.ExecuteAllPersonMoves();
             _arena.UpdateAllPersonPieceInvalidMovement();
+            
+            _arena.UpdateAllPersonPieceLiveTime();
 
             _arena.SendAllRescueeToCastle();
             _arena.UpdateAllPersonPieceInvalidMovement();
@@ -97,7 +110,7 @@ namespace Bentengan
                 _personPieceSelected = person;
                 GD.Print($"{cell.Name} - {person.Name} - {person.CellPosition}");
 
-                var move = person.MovementArea.Except(person.InvalidMovementArea).ToArray();
+                var move = person.MovementArea;
                 
                 foreach (int i in move)
                 {

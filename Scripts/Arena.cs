@@ -8,6 +8,8 @@ namespace Bentengan
     public class Arena : Node2D
     {
         [Export]
+        private string _teamPositioning;
+        [Export]
         private int _length = 10;
         [Export]
         private int _height = 20;
@@ -30,6 +32,7 @@ namespace Bentengan
         public int Length => _length;
         public int Height => _height;
         public List<Team> Teams => _teams;
+        public string TeamPositionings => _teamPositioning;
         
         public override void _Ready()
         {
@@ -38,11 +41,11 @@ namespace Bentengan
             _battleFlowManager = GetNode<BattleFlowManager>("../BattleFlowManagers/Arena");
             GenerateCell();
 
-            var playerTeam = GetNode<Team>("../Teams/PlayerTeam");
+            var playerTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/PlayerTeam");
             playerTeam.Init(this, true);
             _teams.Add(playerTeam);
 
-            var aiTeam = GetNode<Team>("../Teams/AITeam");
+            var aiTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/AITeam");
             aiTeam.Init(this);
             _teams.Add(aiTeam);
 
@@ -113,7 +116,7 @@ namespace Bentengan
             {
                 person.ExecuteMove(Cells[to]);
             }
-            person.IncreaseLivetime(1);
+            //person.IncreaseLivetime(1);
         }
 
         public void ExecuteSystematicPersonMove(int from, int to)

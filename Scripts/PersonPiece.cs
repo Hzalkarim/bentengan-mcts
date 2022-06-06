@@ -41,7 +41,7 @@ namespace Bentengan
         {
             get
             {
-                return _captureArea;
+                return _captureArea.Except(_invalidMovementArea).ToArray();
             }
             set
             {
@@ -50,7 +50,7 @@ namespace Bentengan
         }
         public int[] MovementArea
         {
-            get { return _movementArea; }
+            get { return _movementArea.Except(_invalidMovementArea).ToArray(); }
             set { _movementArea = value; }
         }
         public int[] InvalidMovementArea

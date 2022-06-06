@@ -7,6 +7,8 @@ namespace Bentengan
 {
     public class BattleFlowManager : Node2D
     {
+        public event Action<string, GameplayHighlight> gameplayHighlightEvent;
+
         private BattleEvaluator _evaluator;
         private List<PersonPieceMovement> _registeredMove = new List<PersonPieceMovement>();
         private List<PersonPieceMovement> _systematicMove = new List<PersonPieceMovement>();
@@ -29,11 +31,37 @@ namespace Bentengan
             return emptyCastle;
         }
 
-        public void SendRescueeToCastle(PersonPieceData captured, ArenaData arena)
+        public void CastleCaptured(ArenaData arena)
         {
-            int emptyCastle = FindOwnEmptyCastle(captured, arena);
-            GD.Print($"{captured.cellPosition} rescued");
-            _systematicMove.Add(new PersonPieceMovement(captured.cellPosition, emptyCastle));
+            bool firstTeamWin = Evaluator.CheckCastleCapture(
+                arena.teamDatas[1].castleArea,
+                arena.personPieceDatas.Where(p => p.teamName.Equals(arena.teamDatas[0].teamName))
+                    .Select(i => i.cellPosition).ToArray());
+
+            bool secondTeamWin = Evaluator.CheckCastleCapture(
+                arena.teamDatas[0].castleArea,
+                arena.personPieceDatas.Where(p => p.teamName.Equals(arena.teamDatas[1].teamName))
+                    .Select(i => i.cellPosition).ToArray());
+
+            if (firstTeamWin && secondTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke("Game", GameplayHighlight.GameDraw);
+            }
+            else if (firstTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke(arena.teamDatas[0].teamName, GameplayHighlight.GameWon);
+            }
+            else if (secondTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke(arena.teamDatas[1].teamName, GameplayHighlight.GameWon);
+            }
+        }
+
+        public void SendRescueeToCastle(PersonPieceData rescuee, ArenaData arena)
+        {
+            int emptyCastle = FindOwnEmptyCastle(rescuee, arena);
+            //GD.Print($"{rescuee.cellPosition} rescued");
+            _systematicMove.Add(new PersonPieceMovement(rescuee.cellPosition, emptyCastle));
         }
 
         public void SendAllRescueeToCastle(PersonPieceData[] personsTeamA, PersonPieceData[] personsTeamB, ArenaData arena)
@@ -43,12 +71,16 @@ namespace Bentengan
             {
                 foreach (PersonPieceData rescuer in teams[i])
                 {
+                    if (rescuer.isCaptured) continue;
                     var rescuees = teams[i].Where(p => p.cellPosition != rescuer.cellPosition);
                     foreach (PersonPieceData rescuee in rescuees)
                     {
                         if (!rescuee.isCaptured) continue;
-                        Evaluator.CheckTeammateRescue(rescuee.cellPosition, rescuer.cellPosition, rescuer.CaptureArea,
+                        bool isRescue = Evaluator.CheckTeammateRescue(rescuee.cellPosition, rescuer.cellPosition, rescuer.CaptureArea,
                             (idx) => SendRescueeToCastle(rescuee, arena));
+
+                        if (isRescue)
+                            gameplayHighlightEvent?.Invoke(rescuee.teamName, GameplayHighlight.PersonRescued);
                     }
                 }
             }
@@ -70,6 +102,7 @@ namespace Bentengan
         public void SendCapturedToJail(PersonPieceData captured, ArenaData arena)
         {
             int emptyJail = FindOpponentEmptyJail(captured, arena);
+            //GD.Print($"{captured.cellPosition} captured");
 
             _systematicMove.Add(new PersonPieceMovement(captured.cellPosition, emptyJail));
         }
@@ -80,13 +113,19 @@ namespace Bentengan
             {
                 foreach (PersonPieceData personB in personsTeamB)
                 {
-                    Evaluator.CheckPersonPieceCapture(personA, personB,
+                    bool isCaptured = Evaluator.CheckPersonPieceCapture(personA, personB,
                         (int i) =>
                         {
                             if (i == personA.cellPosition)
+                            {
                                 SendCapturedToJail(personA, arena);
+                                gameplayHighlightEvent?.Invoke(personA.teamName, GameplayHighlight.PersonCaptured);
+                            }
                             else if (i == personB.cellPosition)
+                            {
                                 SendCapturedToJail(personB, arena);
+                                gameplayHighlightEvent?.Invoke(personB.teamName, GameplayHighlight.PersonCaptured);
+                            }
                         });
                 }
             }
@@ -143,6 +182,11 @@ namespace Bentengan
             this.from = from;
             this.to = to;
         }
+    }
+
+    public enum GameplayHighlight
+    {
+        GameWon, GameDraw, PersonCaptured, PersonRescued
     }
 
 }

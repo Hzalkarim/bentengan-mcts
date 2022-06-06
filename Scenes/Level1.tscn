@@ -1,20 +1,27 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Scenes/Arena.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Scenes/DefaultTeam.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Scripts/PlayerInput.cs" type="Script" id=3]
 [ext_resource path="res://Scripts/BattleEvaluator.cs" type="Script" id=4]
 [ext_resource path="res://Scripts/BattleFlowManager.cs" type="Script" id=5]
+[ext_resource path="res://Scripts/AdversaryAgent.cs" type="Script" id=6]
+[ext_resource path="res://Scripts/MCTS/MonteCarloTreeSearch.cs" type="Script" id=7]
+[ext_resource path="res://Scripts/MCTS/SimulatedArena.cs" type="Script" id=8]
 
-[node name="Node2D" type="Node2D"]
+[node name="Main" type="Node2D"]
 
 [node name="BattleFlowManagers" type="Node2D" parent="."]
 
 [node name="Arena" type="Node2D" parent="BattleFlowManagers"]
 script = ExtResource( 5 )
 
+[node name="Simulated" type="Node2D" parent="BattleFlowManagers"]
+script = ExtResource( 5 )
+
 [node name="Arena" parent="." instance=ExtResource( 1 )]
 position = Vector2( 65, 57 )
+_teamPositioning = "Forward"
 _length = 9
 _height = 15
 _firstCellColor = Color( 1, 1, 1, 1 )
@@ -23,24 +30,57 @@ _secondCellColor = Color( 1, 0.839216, 0.839216, 1 )
 [node name="BattleEvaluator" type="Node2D" parent="."]
 script = ExtResource( 4 )
 
-[node name="Teams" parent="." instance=ExtResource( 2 )]
+[node name="TeamPositionings" type="Node2D" parent="."]
 
-[node name="PlayerTeam" parent="Teams" index="0"]
+[node name="Default" parent="TeamPositionings" instance=ExtResource( 2 )]
+
+[node name="PlayerTeam" parent="TeamPositionings/Default" index="0"]
 _teamName = "Player"
 _castleAreaCellIndex = [ 21, 22, 23, 30, 31, 32 ]
-_jailAreaCellIndex = [ 53, 52, 51 ]
+_jailAreaCellIndex = [ 53, 52, 51, 44, 43, 42 ]
 _initPersonPiecePos = [ 21, 23, 31 ]
 
-[node name="AITeam" parent="Teams" index="1"]
+[node name="AITeam" parent="TeamPositionings/Default" index="1"]
 _teamName = "MCTS"
 _castleAreaColor = Color( 1, 0.588235, 0.588235, 1 )
 _castleAreaCellIndex = [ 113, 112, 111, 104, 103, 102 ]
-_jailAreaCellIndex = [ 81, 82, 83 ]
+_jailAreaCellIndex = [ 81, 82, 83, 90, 91, 92 ]
 _initPersonPiecePos = [ 103, 111, 113 ]
+
+[node name="Forward" parent="TeamPositionings" instance=ExtResource( 2 )]
+
+[node name="PlayerTeam" parent="TeamPositionings/Forward" index="0"]
+_teamName = "Player"
+_castleAreaCellIndex = [ 21, 22, 23, 30, 31, 32 ]
+_jailAreaCellIndex = [ 53, 52, 51, 44, 43, 42 ]
+_initPersonPiecePos = [ 21, 23, 129 ]
+
+[node name="AITeam" parent="TeamPositionings/Forward" index="1"]
+_teamName = "MCTS"
+_castleAreaColor = Color( 1, 0.588235, 0.588235, 1 )
+_castleAreaCellIndex = [ 113, 112, 111, 104, 103, 102 ]
+_jailAreaCellIndex = [ 81, 82, 83, 90, 91, 92 ]
+_initPersonPiecePos = [ 88, 63, 65 ]
 
 [node name="PlayerInput" type="Node2D" parent="."]
 script = ExtResource( 3 )
 _selectingTeamName = "Player"
+
+[node name="Agents" type="Node2D" parent="."]
+
+[node name="PlayerAgent" type="Node2D" parent="Agents"]
+script = ExtResource( 6 )
+_teamName = "PlayerTeam"
+
+[node name="OpponentAgent" type="Node2D" parent="Agents"]
+script = ExtResource( 6 )
+_teamName = "AITeam"
+
+[node name="MCTS" type="Node2D" parent="Agents/OpponentAgent"]
+script = ExtResource( 7 )
+
+[node name="SimulatedArena" type="Node2D" parent="Agents/OpponentAgent"]
+script = ExtResource( 8 )
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
@@ -77,4 +117,16 @@ margin_right = 229.0
 margin_bottom = 189.0
 text = "AI"
 
-[editable path="Teams"]
+[node name="Text" type="Control" parent="Control"]
+margin_left = 585.0
+margin_top = 330.0
+margin_right = 625.0
+margin_bottom = 370.0
+
+[node name="Label" type="Label" parent="Control/Text"]
+margin_right = 159.0
+margin_bottom = 24.0
+text = "Game Status: Playing"
+
+[editable path="TeamPositionings/Default"]
+[editable path="TeamPositionings/Forward"]
