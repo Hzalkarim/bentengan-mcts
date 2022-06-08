@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Bentengan.Mcts;
 
 namespace Bentengan
 {
@@ -16,6 +17,7 @@ namespace Bentengan
         private Arena _arena;
         private AdversaryAgent _opponentAgent;
         private AdversaryAgent _playerAgent;
+        private SimulatedArena _simulatedArena;
 
         private List<int> _validMoveArea = new List<int>();
         private PersonPiece _personPieceSelected;
@@ -25,12 +27,13 @@ namespace Bentengan
 
         public override void _Ready()
         {
-            GD.Print("Ready: Player Input");
+            //GD.Print("Ready: Player Input");
             _arena = GetNode<Arena>("../Arena");
             var cells = _arena.Cells;
 
             _opponentAgent = GetNode<AdversaryAgent>("../Agents/OpponentAgent");
-            _playerAgent = GetNode<AdversaryAgent>("../Agents/PlayerAgent");
+            //_playerAgent = GetNode<AdversaryAgent>("../Agents/PlayerAgent");
+            _simulatedArena = GetNode<SimulatedArena>("../Agents/SimulatedArena");
 
             foreach (Cell cell in cells)
             {
@@ -38,27 +41,49 @@ namespace Bentengan
             }
 
             var buttons = GetNode("../Control/Buttons");
-            buttons.GetNode<BaseButton>("PlayerSelect").Connect("button_up", this, "OnPlayerButtonClicked");
-            buttons.GetNode<BaseButton>("AISelect").Connect("button_up", this, "OnAiButtonClicked");
+            buttons.GetNode<BaseButton>("SimulationTrigger").Connect("button_up", this, "OnSimulationTriggerButtonClicked");
+            buttons.GetNode<BaseButton>("LogSummary").Connect("button_up", this, "OnLogSummaryButtonClicked");
+            buttons.GetNode<BaseButton>("ResetSummary").Connect("button_up", this, "OnResetSummaryButtonClicked");
             buttons.GetNode<BaseButton>("Execute").Connect("button_up", this, "OnExecuteButtonClicked");
         }
 
-        private void OnPlayerButtonClicked()
+        // private void OnPlayerButtonClicked()
+        // {
+        //     _selectingTeamName = "Player";
+        // }
+
+        // private void OnAiButtonClicked()
+        // {
+        //     _selectingTeamName = "MCTS";
+        // }
+
+        private void OnSimulationTriggerButtonClicked()
         {
-            _selectingTeamName = "Player";
+            _simulatedArena.SetActive(!_simulatedArena.IsActive);
         }
 
-        private void OnAiButtonClicked()
+        private void OnLogSummaryButtonClicked()
         {
-            _selectingTeamName = "MCTS";
+            string log = _simulatedArena.GetSummary();
+            GD.Print(log);
+        }
+
+        private void OnResetSummaryButtonClicked()
+        {
+            var summ =  _simulatedArena.Summary;
+            summ.ResetCount();
+            GD.Print($"Summary for {summ.teamName} has been reset.");
         }
 
         private void OnExecuteButtonClicked()
         {
             
-            _opponentAgent.RegisterRandomMove();
-            if (_isRandom)
-                _playerAgent.RegisterRandomMove();
+            //_opponentAgent.RegisterRandomMove();
+            _opponentAgent.RegisterBestMove();
+            // if (_isRandom)
+            //     _playerAgent.RegisterRandomMove();
+
+            //_arena.FillColorPrevCell();
 
             _arena.ExecuteAllPersonMoves();
             _arena.UpdateAllPersonPieceInvalidMovement();
@@ -71,6 +96,7 @@ namespace Bentengan
             _arena.SendAllCapturedToJail();
             _arena.UpdateAllPersonPieceInvalidMovement();
 
+            _opponentAgent.GenerateTree();
         }
 
         private void OnCellClicked(Cell cell)
@@ -80,17 +106,17 @@ namespace Bentengan
             {
                 if (cell.GetNodeOrNull($"{SelectingTeamName}_{Team.TEAM_PERSON_SUFFIX}") != null)
                 {
-                    GD.Print("Other PersonPiece of same team exist");
+                    //GD.Print("Other PersonPiece of same team exist");
                     return;
                 }
 
-                GD.Print(cell.Index - _personPieceSelected.CellPosition);
+                //GD.Print(cell.Index - _personPieceSelected.CellPosition);
                 if (_validMoveArea.Contains(cell.Index))
                 {
-                    GD.Print($"Can Move from {_personPieceSelected.CellPosition} to {cell.Index}");
+                    //GD.Print($"Can Move from {_personPieceSelected.CellPosition} to {cell.Index}");
                     //_personPieceSelected.TrySetNextMove(cell.Index);
                     _arena.UnregisterMove(_personPieceSelected.CellPosition);
-                    _arena.RegisterMove(_personPieceSelected.CellPosition, cell.Index);
+                    _arena.TryRegisterMove(_personPieceSelected.TeamName, _personPieceSelected.CellPosition, cell.Index);
                 }
 
                 Phase = PlayerInputPhase.Selecting;
@@ -102,13 +128,13 @@ namespace Bentengan
             }
             else if (Phase == PlayerInputPhase.Selecting)
             {
-                GD.Print("HEHEH");
+                //GD.Print("HEHEH");
                 PersonPiece person = 
                     cell.GetNodeOrNull<PersonPiece>($"{SelectingTeamName}_{Team.TEAM_PERSON_SUFFIX}");
                 if (person == null) return;
 
                 _personPieceSelected = person;
-                GD.Print($"{cell.Name} - {person.Name} - {person.CellPosition}");
+                //GD.Print($"{cell.Name} - {person.Name} - {person.CellPosition}");
 
                 var move = person.MovementArea;
                 

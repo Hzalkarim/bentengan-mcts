@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 using Bentengan;
@@ -13,20 +14,31 @@ namespace Bentengan.Mcts
 
         private ArenaData _arenaData;
         private RandomNumberGenerator _rnd = new RandomNumberGenerator();
+        private SimulationSummary _summ = new SimulationSummary();
         private List<int> _tos;
 
         private uint _moveCount = 0;
         private uint _simulationCount = 0;
         private bool _isShowLog = false;
         private bool _isSimulating = false;
-        private bool _isHighlightOccur = true;
 
         [Export]
         private bool _isActive = false;
-
+        [Export]
+        private float _simulationFactorConstant;
+        [Export]
+        private string _summTeamName;
         [Export]
         private int _teamMemberCount = 3;
 
+        public event Action onRoundStartEvent;
+        public event Action onRoundEndEvent;
+        public event Action onSimulationStartEvent;
+        public event Action onSimulationEndWithNoHighlightEvent;
+
+        public ArenaData ArenaData => _arenaData;
+        public SimulationSummary Summary => _summ;
+        public bool IsActive => _isActive;
 
         public override void _Ready()
         {
@@ -35,17 +47,23 @@ namespace Bentengan.Mcts
             _battleFlowManager = GetNode<BattleFlowManager>("/root/Main/BattleFlowManagers/Simulated");
             _arena = GetNode<Arena>("/root/Main/Arena");
             _tos = new List<int>(_teamMemberCount);
+            _summ.teamName = _summTeamName;
 
             _battleFlowManager.gameplayHighlightEvent += OnGameplayHighlight;
 
             _arenaData = _arena.ToData();
         }
 
-        public override void _Process(float delta)
-        {
-            if (!_isActive) return;
+        // public override void _Process(float delta)
+        // {
+        //     if (!_isActive) return;
 
-            StartSimulation((int)(5 / delta));
+        //     RunSimulation((int)(_simulationFactorConstant / delta));
+        // }
+
+        public void SetActive(bool isActive)
+        {
+            _isActive = isActive;
         }
 
         public void SetArenaData(ArenaData data)
@@ -53,9 +71,53 @@ namespace Bentengan.Mcts
             _arenaData = data;
         }
 
-        public void RegisterMove(int from, int to)
+        public void ResetArenaData()
         {
-            _battleFlowManager.RegisterMove(from, to);
+            _arenaData = _arena.ToData();
+        }
+
+        public void StopSimulation()
+        {
+            _isSimulating = false;
+        }
+
+        public void AddGameplayHighlightListener(Action<string, GameplayHighlight> action)
+        {
+            _battleFlowManager.gameplayHighlightEvent += action;
+        }
+
+        public void RemoveGameplayHighlightListener(Action<string, GameplayHighlight> action)
+        {
+            _battleFlowManager.gameplayHighlightEvent += action;
+        }
+
+        public void SetPersonData(int currentPos, int nextPos, int liveTime)
+        {
+            for (int i = 0; i < _arenaData.personPieceDatas.Length; i++)
+            {
+                if (_arenaData.personPieceDatas[i].cellPosition == currentPos)
+                {
+                    _arenaData.personPieceDatas[i].cellPosition = nextPos;
+                    _arenaData.personPieceDatas[i].liveTime = liveTime;
+                    break;
+                }
+            }
+        }
+
+        public void RegisterMove(string teamName, int from, int to)
+        {
+            _battleFlowManager.RegisterMove(teamName, from, to);
+        }
+
+        public bool TryRegisterMove(string teamName, int from, int to)
+        {
+            if (_battleFlowManager.RegisteredMove.Any(p => p.teamName.Equals(teamName) && p.to == to))
+            {
+                return false;
+            }
+
+            RegisterMove(teamName, from, to);
+            return true;
         }
 
         public void UnregisterMove(int from)
@@ -64,48 +126,71 @@ namespace Bentengan.Mcts
                 _battleFlowManager.UnregisterMove(from);
         }
 
-        public void StartSimulation(int times)
+        public void RunSingleRound()
+        {
+            onRoundStartEvent?.Invoke();
+
+            ExecuteAllPersonMoves();
+            UpdatePersonInvalidMovement();
+
+            CastleCaptured();
+            if (!_isSimulating) return;
+            UpdatePersonLiveTime();
+
+            SendRescueeToCastle();
+            UpdatePersonInvalidMovement();
+
+            SendCapturedToJail();
+            UpdatePersonInvalidMovement();
+
+            onRoundEndEvent?.Invoke();
+        }
+
+        public void RunSingleRound(bool firstTeamRandom, bool secondTeamRandom)
+        {
+            if (firstTeamRandom)
+                RegisterRandomTeamMove(_arenaData.teamDatas[0].teamName);
+            if (secondTeamRandom)
+                RegisterRandomTeamMove(_arenaData.teamDatas[1].teamName);
+
+            RunSingleRound();
+        }
+
+        public void RunSimulation(int times)
         {
             //GD.Print("Similation started");
-            _arenaData = _arena.ToData();
+            //_arenaData = _arena.ToData();
 
             int i = 0;
             _rnd.Randomize();
             _isSimulating = true;
+            onSimulationStartEvent?.Invoke();
             while (_isSimulating && i < times)
             {
                 i++;
                 _moveCount++;
                 if (_moveCount % 1000 == 0)
                 {
-                    GD.Print($"Total simulation {_simulationCount} with round runs: {_moveCount}");
+                    GD.Print($"Total move counts: {_moveCount} - FPS {Engine.GetFramesPerSecond()}");
                     _isShowLog = true;
                 }
 
-                RandomTeamMove(_arenaData.teamDatas[0].teamName);
-                RandomTeamMove(_arenaData.teamDatas[1].teamName);
-                
-                ExecuteAllPersonMoves();
-                UpdatePersonInvalidMovement();
-
-                CastleCaptured();
-
-                UpdatePersonLiveTime();
-
-                SendRescueeToCastle();
-                UpdatePersonInvalidMovement();
-
-                SendCapturedToJail();
-                UpdatePersonInvalidMovement();
+                RunSingleRound(firstTeamRandom: true, secondTeamRandom: true);
 
             }
 
-            if (i < times && !_isSimulating)
-                StartSimulation(times - i);
+            if (_isSimulating)
+            {
+                onSimulationEndWithNoHighlightEvent?.Invoke();
+                _isSimulating = false;
+            }
+
+            // if (i < times && !_isSimulating)
+            //     RunSimulation(times - i);
             //GD.Print($"Simulation End. Round count: {i}");
         }
 
-        public void RandomTeamMove(string teamName)
+        public void RegisterRandomTeamMove(string teamName)
         {
             _tos.Clear();
             _rnd.Randomize();
@@ -116,43 +201,33 @@ namespace Bentengan.Mcts
                 int l = person.MovementArea.Length;
                 if (l == 0) continue;
 
-                int to = person.MovementArea[_rnd.RandiRange(0, l - 1)] + person.cellPosition;
-                if (_tos.Contains(to)) 
+                int to = -1;
+                bool success = false;
+                int i = 0;
+                do
                 {
-                    //GD.Print("Failed to move");
-                    continue;
-                }
+                    i++;
+                    to = person.MovementArea[_rnd.RandiRange(0, l - 1)] + person.cellPosition;
+                    if (_tos.Contains(to)) 
+                    {
+                        //GD.Print("Failed to move");
+                        continue;
+                    }
 
+                    success = TryRegisterMove(person.teamName, person.cellPosition, to);
+                }
+                while (!success && i < 3);
                 _tos.Add(to);
-                RegisterMove(person.cellPosition, to);
                 //GD.Print($"Register move {person.cellPosition}->{to}");
             }
         }
 
+        public string GetSummary() => _summ.ToString();
+
         private void CastleCaptured()
         {
             _battleFlowManager.CastleCaptured(_arenaData);
-        }
-
-        private void OnGameplayHighlight(string teamName, GameplayHighlight highlight)
-        {
-            _simulationCount++;
-            _isSimulating = false;
-            if (!_isShowLog) return;
-            switch (highlight)
-            {
-                case GameplayHighlight.GameWon:
-                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} WON");
-                    break;
-                case GameplayHighlight.PersonCaptured:
-                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} captured");
-                    break;
-                case GameplayHighlight.PersonRescued:
-                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} rescued");
-                    break;
-            }
-            _isShowLog = false;
-        }
+        }  
 
         private void UpdatePersonLiveTime()
         {
@@ -261,6 +336,30 @@ namespace Bentengan.Mcts
             _battleFlowManager.ExecuteSystematicMove(ExecuteSystematicPersonMove);
         }
 
+        private void OnGameplayHighlight(string teamName, GameplayHighlight highlight)
+        {
+            _simulationCount++;
+            _isSimulating = false;
+            _summ.AddCount(highlight, teamName);
+            if (!_isShowLog) return;
+            switch (highlight)
+            {
+                case GameplayHighlight.GameWon:
+                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} WON");
+                    break;
+                case GameplayHighlight.GameDraw:
+                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} Draw");
+                    break;
+                case GameplayHighlight.PersonCaptured:
+                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} captured");
+                    break;
+                case GameplayHighlight.PersonRescued:
+                    GD.Print($"{_simulationCount}:{_moveCount}: {teamName} rescued");
+                    break;
+            }
+            _isShowLog = false;
+        }
+
         private int GetTeamIndex(string teamName)
         {
             int idx = -1;
@@ -276,7 +375,5 @@ namespace Bentengan.Mcts
             return idx;
         }
     }
-
-    
 
 }

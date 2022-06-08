@@ -8,6 +8,7 @@ namespace Bentengan
     {
         [Export]
         private int _liveTime = 0;
+        [Export]
         private int _cellPosition = 0;
         private int[] _movementArea = {-1, 0, 1};
         private int[] _invalidMovementArea = {};

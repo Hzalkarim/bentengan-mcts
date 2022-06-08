@@ -41,7 +41,7 @@ _jailAreaCellIndex = [ 53, 52, 51, 44, 43, 42 ]
 _initPersonPiecePos = [ 21, 23, 31 ]
 
 [node name="AITeam" parent="TeamPositionings/Default" index="1"]
-_teamName = "MCTS"
+_teamName = "AITeam"
 _castleAreaColor = Color( 1, 0.588235, 0.588235, 1 )
 _castleAreaCellIndex = [ 113, 112, 111, 104, 103, 102 ]
 _jailAreaCellIndex = [ 81, 82, 83, 90, 91, 92 ]
@@ -56,7 +56,7 @@ _jailAreaCellIndex = [ 53, 52, 51, 44, 43, 42 ]
 _initPersonPiecePos = [ 21, 23, 129 ]
 
 [node name="AITeam" parent="TeamPositionings/Forward" index="1"]
-_teamName = "MCTS"
+_teamName = "AITeam"
 _castleAreaColor = Color( 1, 0.588235, 0.588235, 1 )
 _castleAreaCellIndex = [ 113, 112, 111, 104, 103, 102 ]
 _jailAreaCellIndex = [ 81, 82, 83, 90, 91, 92 ]
@@ -68,6 +68,11 @@ _selectingTeamName = "Player"
 
 [node name="Agents" type="Node2D" parent="."]
 
+[node name="SimulatedArena" type="Node2D" parent="Agents"]
+script = ExtResource( 8 )
+_simulationFactorConstant = 10.0
+_summTeamName = "AITeam"
+
 [node name="PlayerAgent" type="Node2D" parent="Agents"]
 script = ExtResource( 6 )
 _teamName = "PlayerTeam"
@@ -75,12 +80,14 @@ _teamName = "PlayerTeam"
 [node name="OpponentAgent" type="Node2D" parent="Agents"]
 script = ExtResource( 6 )
 _teamName = "AITeam"
+isActive = true
 
 [node name="MCTS" type="Node2D" parent="Agents/OpponentAgent"]
 script = ExtResource( 7 )
-
-[node name="SimulatedArena" type="Node2D" parent="Agents/OpponentAgent"]
-script = ExtResource( 8 )
+_teamName = "AITeam"
+_adversaryName = "Player"
+_limitVisit = 30
+_processQuotaFactor = 10.0
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
@@ -93,9 +100,6 @@ margin_left = 581.0
 margin_top = 123.0
 margin_right = 581.0
 margin_bottom = 123.0
-__meta__ = {
-"_edit_group_": true
-}
 
 [node name="Execute" type="Button" parent="Control/Buttons"]
 margin_right = 228.0
@@ -104,29 +108,26 @@ grow_horizontal = 0
 grow_vertical = 0
 text = "Execute"
 
-[node name="PlayerSelect" type="Button" parent="Control/Buttons"]
+[node name="SimulationTrigger" type="Button" parent="Control/Buttons"]
 margin_left = -1.0
-margin_top = 64.0
+margin_top = 79.0
 margin_right = 228.0
-margin_bottom = 121.0
-text = "Player"
+margin_bottom = 136.0
+text = "Simulation Trigger"
 
-[node name="AISelect" type="Button" parent="Control/Buttons"]
-margin_top = 132.0
-margin_right = 229.0
-margin_bottom = 189.0
-text = "AI"
+[node name="LogSummary" type="Button" parent="Control/Buttons"]
+margin_left = -1.0
+margin_top = 148.0
+margin_right = 228.0
+margin_bottom = 205.0
+text = "Log Summary"
 
-[node name="Text" type="Control" parent="Control"]
-margin_left = 585.0
-margin_top = 330.0
-margin_right = 625.0
-margin_bottom = 370.0
-
-[node name="Label" type="Label" parent="Control/Text"]
-margin_right = 159.0
-margin_bottom = 24.0
-text = "Game Status: Playing"
+[node name="ResetSummary" type="Button" parent="Control/Buttons"]
+margin_left = -1.0
+margin_top = 214.0
+margin_right = 228.0
+margin_bottom = 271.0
+text = "Reset Summary"
 
 [editable path="TeamPositionings/Default"]
 [editable path="TeamPositionings/Forward"]

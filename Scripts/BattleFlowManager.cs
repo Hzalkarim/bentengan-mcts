@@ -14,6 +14,7 @@ namespace Bentengan
         private List<PersonPieceMovement> _systematicMove = new List<PersonPieceMovement>();
 
         public BattleEvaluator Evaluator => _evaluator;
+        public List<PersonPieceMovement> RegisteredMove => _registeredMove;
 
         public override void _Ready()
         {
@@ -57,11 +58,30 @@ namespace Bentengan
             }
         }
 
+        public void AllPersonCaptured(PersonPieceData[] firstTeam, PersonPieceData[] secondTeam)
+        {
+            bool firstTeamWin = secondTeam.All(p => p.isCaptured);
+            bool secondTeamWin = firstTeam.All(p => p.isCaptured);
+
+            if (firstTeamWin && secondTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke("Game", GameplayHighlight.GameDraw);
+            }
+            else if (firstTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke(firstTeam[0].teamName, GameplayHighlight.GameWon);
+            }
+            else if (secondTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke(secondTeam[0].teamName, GameplayHighlight.GameWon);
+            }
+        }
+
         public void SendRescueeToCastle(PersonPieceData rescuee, ArenaData arena)
         {
             int emptyCastle = FindOwnEmptyCastle(rescuee, arena);
             //GD.Print($"{rescuee.cellPosition} rescued");
-            _systematicMove.Add(new PersonPieceMovement(rescuee.cellPosition, emptyCastle));
+            _systematicMove.Add(new PersonPieceMovement(rescuee.teamName, rescuee.cellPosition, emptyCastle));
         }
 
         public void SendAllRescueeToCastle(PersonPieceData[] personsTeamA, PersonPieceData[] personsTeamB, ArenaData arena)
@@ -104,7 +124,7 @@ namespace Bentengan
             int emptyJail = FindOpponentEmptyJail(captured, arena);
             //GD.Print($"{captured.cellPosition} captured");
 
-            _systematicMove.Add(new PersonPieceMovement(captured.cellPosition, emptyJail));
+            _systematicMove.Add(new PersonPieceMovement(captured.teamName, captured.cellPosition, emptyJail));
         }
 
         public void SendAllCapturedToJail(PersonPieceData[] personsTeamA, PersonPieceData[] personsTeamB, ArenaData arena)
@@ -148,9 +168,9 @@ namespace Bentengan
             _systematicMove.Clear();
         }
 
-        public void RegisterMove(int from, int to)
+        public void RegisterMove(string teamName, int from, int to)
         {
-            _registeredMove.Add(new PersonPieceMovement(from, to));
+            _registeredMove.Add(new PersonPieceMovement(teamName, from, to));
         }
 
         public void UnregisterMove(int from)
@@ -172,13 +192,15 @@ namespace Bentengan
 
     }
 
-    struct PersonPieceMovement
+    public struct PersonPieceMovement
     {
+        public string teamName;
         public int from;
         public int to;
 
-        public PersonPieceMovement(int from, int to)
+        public PersonPieceMovement(string teamName, int from, int to)
         {
+            this.teamName = teamName;
             this.from = from;
             this.to = to;
         }

@@ -86,9 +86,20 @@ namespace Bentengan
             }
         }
 
-        public void RegisterMove(int from, int to)
+        public void RegisterMove(string teamName, int from, int to)
         {
-            _battleFlowManager.RegisterMove(from, to);
+            _battleFlowManager.RegisterMove(teamName, from, to);
+        }
+
+        public bool TryRegisterMove(string teamName, int from, int to)
+        {
+            if (_battleFlowManager.RegisteredMove.Any(p => p.teamName.Equals(teamName) && p.to == to))
+            {
+                return false;
+            }
+
+            RegisterMove(teamName, from, to);
+            return true;
         }
 
         public void UnregisterMove(int from)
@@ -243,6 +254,11 @@ namespace Bentengan
             }
         }
 
+        public void ResetColorCell(int cell)
+        {
+            
+        }
+
         public void InsertChild(string cellName, Node node)
         {
             GetNode(cellName).AddChild(node);
@@ -261,6 +277,16 @@ namespace Bentengan
 
             SetTeamCellColor(_teams[0]);
             SetTeamCellColor(_teams[1]);
+        }
+
+        public void FillColorPrevCell()
+        {
+            var prev = _allPersons.Select(p => p.CellPosition);
+
+            foreach (int i in prev)
+            {
+                Cells[i].Modulate = Color.Color8(200, 200, 255, 255);
+            }
         }
 
         private Node InstantiateNode(PackedScene scene)
