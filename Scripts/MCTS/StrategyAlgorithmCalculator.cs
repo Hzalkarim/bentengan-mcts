@@ -80,7 +80,7 @@ namespace Bentengan.Utility
                 }
             }
 
-            return ApproachTarget(targetGroup[idx], cellPos);
+            return idx == -1 ? 0 : ApproachTarget(targetGroup[idx], cellPos);
         }
 
         private static double CellSquareDistance(int a, int b)

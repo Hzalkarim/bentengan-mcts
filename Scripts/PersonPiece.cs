@@ -14,11 +14,33 @@ namespace Bentengan
         private int[] _invalidMovementArea = {};
         private int[] _captureArea = {0};
 
+        private bool _isCaptured;
+
         private int _nextMove = -1;
+
+        private Sprite _isCapturedSprite;
 
         #region PROPERTY
         public string TeamName {get; set;}
-        public bool IsCaptured {get; set;}
+        public bool IsCaptured 
+        {
+            get
+            {
+                return _isCaptured;
+            }
+            set
+            {
+                if (value)
+                {
+                    _isCapturedSprite.Show();
+                }
+                else
+                {
+                    _isCapturedSprite.Hide();
+                }
+                _isCaptured = value;
+            }
+        }
         public int NextMove => _nextMove;
         public int LiveTime
         {
@@ -66,6 +88,12 @@ namespace Bentengan
             }
         }
         #endregion
+
+        public override void _Ready()
+        {
+            _isCapturedSprite = GetNode<Sprite>("IsCaptured");
+            _isCapturedSprite.Hide();
+        }
 
         public void ResetLivetime()
         {

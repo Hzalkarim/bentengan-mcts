@@ -21,7 +21,7 @@ script = ExtResource( 5 )
 
 [node name="Arena" parent="." instance=ExtResource( 1 )]
 position = Vector2( 65, 57 )
-_teamPositioning = "Forward"
+_teamPositioning = "Default"
 _length = 9
 _height = 15
 _firstCellColor = Color( 1, 1, 1, 1 )
@@ -86,7 +86,7 @@ isActive = true
 script = ExtResource( 7 )
 _teamName = "AITeam"
 _adversaryName = "Player"
-_limitVisit = 30
+_limitVisit = 100
 _processQuotaFactor = 10.0
 
 [node name="Control" type="Control" parent="."]

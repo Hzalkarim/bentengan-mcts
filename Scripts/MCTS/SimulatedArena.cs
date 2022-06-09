@@ -169,7 +169,7 @@ namespace Bentengan.Mcts
             {
                 i++;
                 _moveCount++;
-                if (_moveCount % 1000 == 0)
+                if (_moveCount % 5000 == 0)
                 {
                     GD.Print($"Total move counts: {_moveCount} - FPS {Engine.GetFramesPerSecond()}");
                     _isShowLog = true;

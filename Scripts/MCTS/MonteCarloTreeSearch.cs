@@ -28,6 +28,8 @@ namespace Bentengan.Mcts
         public MctsNode RootAdv { get; private set; }
         public bool IsActive { get; private set; }
 
+        public event Action onFinishGenerateTreeEvent;
+
         public override void _Ready()
         {
             Root = new MctsNode();
@@ -50,10 +52,6 @@ namespace Bentengan.Mcts
             _simulatedArena.ResetArenaData();
             Selection(Root);
             //Selection(RootAdv);
-            StrategyAlgorithmCalculator.SetArenaData(_simulatedArena.ArenaData);
-
-            int huhu = 49.CaptureOpponentCastle(_teamName);
-            GD.Print(huhu);
 
         }
 
@@ -193,21 +191,27 @@ namespace Bentengan.Mcts
             }
             else
             {
-                //GD.Print(_frameQuota);
-                if (node.timesVisit > _limitVisit)
+                if (_frameQuota <= 0)
                 {
-                    IsActive = false;
-                    GD.Print($"AvgScore: {node.AverageScore} - Times Visit: {node.timesVisit}");
-                    MctsNode max = GetMaxScoreChildNode(Root);
-                    GD.Print($"Best Move: {max.ToString()} with avgscore {max.AverageScore} visited {max.timesVisit}");
+                    if (Root.timesVisit < _limitVisit)
+                    {
+                        IsActive = true;
+                    }
                     return;
                 }
-                else
+
+                if (node.timesVisit < _limitVisit)
                 {
                     _simulatedArena.ResetArenaData();
                     Selection(Root);
                 }
-
+                else if (node.timesVisit == _limitVisit)
+                {
+                    onFinishGenerateTreeEvent?.Invoke();
+                    // GD.Print($"AvgScore: {node.AverageScore} - Times Visit: {node.timesVisit}");
+                    // MctsNode max = GetMaxScoreChildNode(Root);
+                    // GD.Print($"Best Move: {max.ToString()} with avgscore {max.AverageScore} visited {max.timesVisit}");
+                }
             }
         }
 

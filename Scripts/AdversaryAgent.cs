@@ -25,6 +25,8 @@ namespace Bentengan
             _arena = GetNode<Arena>("../../Arena");
             _team = GetNode<Team>($"../../TeamPositionings/{_arena.TeamPositionings}/{_teamName}");
             _mcts = GetNode<MonteCarloTreeSearch>("MCTS");
+
+            _mcts.onFinishGenerateTreeEvent += OnTreeFinished;
         }
 
         public void RegisterBestMove()
@@ -42,6 +44,11 @@ namespace Bentengan
 
         public void GenerateTree()
         {
+            if (_team.PersonPieces.All(p => p.IsCaptured))
+            {
+                GD.Print("Not generate tree: all person captured");
+                return;
+            }
             _mcts.Root = new MctsNode();
 
             _mcts.GenerateTreeFromRoot();
@@ -63,6 +70,11 @@ namespace Bentengan
                 tos.Add(to);
                 _arena.RegisterMove(p.TeamName, p.CellPosition, to);
             });
+        }
+
+        private void OnTreeFinished()
+        {
+            GD.Print("Stopped Selection");
         }
     }
 

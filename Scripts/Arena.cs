@@ -132,7 +132,22 @@ namespace Bentengan
 
         public void ExecuteSystematicPersonMove(int from, int to)
         {
-            PersonPiece person = _allPersons.Find(i => i.CellPosition == from);
+            PersonPiece person = null;
+            PersonPiece[] duo = _allPersons.Where(p => p.CellPosition == from).ToArray();
+            if (duo.Count() == 0)
+                return;
+            else if (duo.Count() == 1)
+            {
+                person = duo[0];
+            }
+            else
+            {
+                IncreaseRed(from);
+                SendToJail(from);
+                SendToJail(from);
+                return;
+            }
+
             person.SetArbitraryMove(to);
             person.ExecuteMove(Cells[to]);
 
@@ -140,6 +155,7 @@ namespace Bentengan
             int opponent = team == 0 ? 1 : 0;
             if (_battleFlowManager.Evaluator.CheckIsInOpponentJail(to, Teams[opponent].JailAreaCellIndex.ToArray()))
             {
+                IncreaseRed(from);
                 person.IsCaptured = true;
             }
             else if (_battleFlowManager.Evaluator.CheckIsInOwnCastle(to, Teams[team].CastleAreaCellIndex.ToArray()))
@@ -205,6 +221,8 @@ namespace Bentengan
             person.SetArbitraryMove(emptyJail);
             person.ExecuteMove(Cells[emptyJail]);
 
+            person.IsCaptured = true;
+
             GD.Print($"Jail Pos: {emptyJail}");
         }
         #endregion
@@ -254,9 +272,13 @@ namespace Bentengan
             }
         }
 
-        public void ResetColorCell(int cell)
+        public void IncreaseRed(int idx)
         {
-            
+            Color c = Cells[idx].Modulate;
+            int r = Mathf.Clamp(c.r8 + 100, 0, 255);
+            GD.Print($"Increase Red: {r}");
+            // Cells[idx].Modulate = Color.Color8((byte)r, (byte)c.g8, (byte)c.b8, (byte)c.a8);
+            Cells[idx].Modulate = Color.Color8(255, 0, 0, 255);
         }
 
         public void InsertChild(string cellName, Node node)
