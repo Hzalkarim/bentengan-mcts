@@ -38,12 +38,14 @@ namespace Bentengan.Utility
         #region LOW PRIORITY
         public static int Standby(this int personCellPos, string teamName)
         {
-            return 0;
+            return personCellPos;
         }
 
         public static int RescueTeamPerson(this int personCellPos, string teamName)
         {
-            return -_arenaData.length;
+            int[] friendlyTeamPerson = _arenaData.personPieceDatas
+                .Where(p => p.teamName.Equals(teamName) && p.isCaptured).Select(q => q.cellPosition).ToArray();
+            return ApproachNearestTarget(friendlyTeamPerson, personCellPos);
         }
         #endregion
 
@@ -51,8 +53,6 @@ namespace Bentengan.Utility
         {
             switch (strategy)
             {
-                case MctsStrategy.Standby:
-                    return personCellPos.Standby(teamName);
                 case MctsStrategy.CaptureCastle:
                     return personCellPos.CaptureOpponentCastle(teamName);
                 case MctsStrategy.BackToCastle:
@@ -61,6 +61,8 @@ namespace Bentengan.Utility
                     return personCellPos.CaptureOpponentPerson(teamName);
                 case MctsStrategy.RescueTeam:
                     return personCellPos.RescueTeamPerson(teamName);
+                case MctsStrategy.Standby:
+                    return personCellPos.Standby(teamName);
                 default:
                     return -1;
             }
@@ -113,6 +115,6 @@ namespace Bentengan.Utility
 
     public enum MctsStrategy
     {
-        Standby, CaptureCastle, BackToCastle, CaptureOpponent, RescueTeam
+        CaptureCastle, BackToCastle, CaptureOpponent, RescueTeam, Standby
     }
 }

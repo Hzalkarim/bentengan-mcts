@@ -12,6 +12,7 @@ namespace Bentengan
         private Team _team;
 
         private MonteCarloTreeSearch _mcts;
+        private MonteCarloTreeSearch _mctsForPlayer;
         private MctsNode _pickedNode;
 
         [Export]
@@ -19,12 +20,17 @@ namespace Bentengan
         [Export]
         private bool isActive;
 
+        public MonteCarloTreeSearch Mcts => _mcts;
+
         public override void _Ready()
         {
             if (!isActive) return;
             _arena = GetNode<Arena>("../../Arena");
             _team = GetNode<Team>($"../../TeamPositionings/{_arena.TeamPositionings}/{_teamName}");
+
             _mcts = GetNode<MonteCarloTreeSearch>("MCTS");
+            _mcts.RegisterToSimulatedArenaEvents();
+            _mctsForPlayer = GetNode<MonteCarloTreeSearch>("MCTS_ForPlayer");
 
             _mcts.onFinishGenerateTreeEvent += OnTreeFinished;
         }
@@ -32,7 +38,7 @@ namespace Bentengan
         public void RegisterBestMove()
         {
             _mcts.StopSimulation();
-            _pickedNode = _mcts.GetMaxScoreChildNode(_mcts.Root);
+            _pickedNode = _mcts.GetMaxAvgChildNode(_mcts.Root);
             int[] movement = _arena.ToData().personPieceDatas
                 .Where(p => p.teamName.Equals(_teamName)).Select(q => q.cellPosition).ToArray();
             GD.Print(_pickedNode.ToString());
@@ -49,7 +55,17 @@ namespace Bentengan
                 GD.Print("Not generate tree: all person captured");
                 return;
             }
-            _mcts.Root = new MctsNode();
+
+            if (_pickedNode == null)
+            {
+                _pickedNode = new MctsNode();
+            }
+            else
+            {
+                _pickedNode.parent = null;
+                _mcts.LimitVisit += _pickedNode.timesVisit;
+            }
+            _mcts.Root = _pickedNode;
 
             _mcts.GenerateTreeFromRoot();
         }

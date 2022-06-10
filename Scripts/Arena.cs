@@ -143,8 +143,19 @@ namespace Bentengan
             else
             {
                 IncreaseRed(from);
-                SendToJail(from);
-                SendToJail(from);
+                if (duo[0].LiveTime == duo[1].LiveTime)
+                {
+                    SendToJail(duo[0]);
+                    SendToJail(duo[1]);
+                }
+                else if (duo[0].LiveTime > duo[1].LightMask)
+                {
+                    SendToJail(duo[0]);
+                }
+                else
+                {
+                    SendToJail(duo[1]);
+                }
                 return;
             }
 
@@ -213,6 +224,11 @@ namespace Bentengan
         public void SendToJail(int cell)
         {
             var person = Cells[cell].GetChild<PersonPiece>(2);
+            SendToJail(person);
+        }
+
+        public void SendToJail(PersonPiece person)
+        {
             List<int> jailArea = person.TeamName == Teams[0].TeamName ?
                 Teams[1].JailAreaCellIndex : Teams[0].JailAreaCellIndex;
 

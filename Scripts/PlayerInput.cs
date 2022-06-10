@@ -19,6 +19,12 @@ namespace Bentengan
         private AdversaryAgent _playerAgent;
         private SimulatedArena _simulatedArena;
 
+        private Timer _timer;
+        private BaseButton _executeButton;
+
+        private int _roundCount;
+        private ProgressBar _timerProgressBar;
+
         private List<int> _validMoveArea = new List<int>();
         private PersonPiece _personPieceSelected;
 
@@ -44,7 +50,18 @@ namespace Bentengan
             buttons.GetNode<BaseButton>("SimulationTrigger").Connect("button_up", this, "OnSimulationTriggerButtonClicked");
             buttons.GetNode<BaseButton>("LogSummary").Connect("button_up", this, "OnLogSummaryButtonClicked");
             buttons.GetNode<BaseButton>("ResetSummary").Connect("button_up", this, "OnResetSummaryButtonClicked");
-            buttons.GetNode<BaseButton>("Execute").Connect("button_up", this, "OnExecuteButtonClicked");
+            _executeButton = buttons.GetNode<BaseButton>("Execute");
+            _executeButton.Connect("button_up", this, "OnExecuteButtonClicked");
+
+            _timer = buttons.GetNode<Timer>("../Timer");
+            _timer.Connect("timeout", this, "OnTimerTick");
+
+            _timerProgressBar = buttons.GetNode<ProgressBar>("../TimerProgress");
+            _timerProgressBar.Value = 0;
+
+            _opponentAgent.Mcts.onBackpropagationEndEvent += OnRoundEnd;
+
+            _opponentAgent.GenerateTree();
         }
 
         // private void OnPlayerButtonClicked()
@@ -77,7 +94,8 @@ namespace Bentengan
 
         private void OnExecuteButtonClicked()
         {
-            
+            _executeButton.Disabled = true;
+            _timer.Start();
             //_opponentAgent.RegisterRandomMove();
             _opponentAgent.RegisterBestMove();
             // if (_isRandom)
@@ -96,6 +114,7 @@ namespace Bentengan
             _arena.SendAllCapturedToJail();
             _arena.UpdateAllPersonPieceInvalidMovement();
 
+            OnSimStart();
             _opponentAgent.GenerateTree();
         }
 
@@ -147,6 +166,24 @@ namespace Bentengan
 
                 Phase = PlayerInputPhase.PersonPieceSelected;
             }
+        }
+
+        private void OnTimerTick()
+        {
+            _executeButton.Disabled = false;
+
+        }
+
+        private void OnSimStart()
+        {
+            _timerProgressBar.Value = 0;
+            _roundCount = 0;
+        }
+
+        private void OnRoundEnd()
+        {
+            _roundCount++;
+            _timerProgressBar.Value = _roundCount * 100 / _opponentAgent.Mcts.LimitVisit;
         }
     }
 

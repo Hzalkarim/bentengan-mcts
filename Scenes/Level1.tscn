@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://Scenes/Arena.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Scenes/DefaultTeam.tscn" type="PackedScene" id=2]
@@ -8,6 +8,17 @@
 [ext_resource path="res://Scripts/AdversaryAgent.cs" type="Script" id=6]
 [ext_resource path="res://Scripts/MCTS/MonteCarloTreeSearch.cs" type="Script" id=7]
 [ext_resource path="res://Scripts/MCTS/SimulatedArena.cs" type="Script" id=8]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.32549, 0.74902, 0.368627, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_bottom = 1
+border_color = Color( 0.631373, 0.839216, 0.584314, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 2
 
 [node name="Main" type="Node2D"]
 
@@ -62,10 +73,6 @@ _castleAreaCellIndex = [ 113, 112, 111, 104, 103, 102 ]
 _jailAreaCellIndex = [ 81, 82, 83, 90, 91, 92 ]
 _initPersonPiecePos = [ 88, 63, 65 ]
 
-[node name="PlayerInput" type="Node2D" parent="."]
-script = ExtResource( 3 )
-_selectingTeamName = "Player"
-
 [node name="Agents" type="Node2D" parent="."]
 
 [node name="SimulatedArena" type="Node2D" parent="Agents"]
@@ -85,13 +92,27 @@ isActive = true
 [node name="MCTS" type="Node2D" parent="Agents/OpponentAgent"]
 script = ExtResource( 7 )
 _teamName = "AITeam"
-_adversaryName = "Player"
+_limitVisit = 500
+_initOnReady = true
+_processQuotaFactor = 10.0
+
+[node name="MCTS_ForPlayer" type="Node2D" parent="Agents/OpponentAgent"]
+script = ExtResource( 7 )
+_teamName = "PlayerTeam"
 _limitVisit = 100
 _processQuotaFactor = 10.0
+
+[node name="PlayerInput" type="Node2D" parent="."]
+script = ExtResource( 3 )
+_selectingTeamName = "Player"
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
+
+[node name="Timer" type="Timer" parent="Control"]
+wait_time = 2.0
+one_shot = true
 
 [node name="Buttons" type="Control" parent="Control"]
 anchor_right = 1.0
@@ -109,6 +130,7 @@ grow_vertical = 0
 text = "Execute"
 
 [node name="SimulationTrigger" type="Button" parent="Control/Buttons"]
+visible = false
 margin_left = -1.0
 margin_top = 79.0
 margin_right = 228.0
@@ -116,6 +138,7 @@ margin_bottom = 136.0
 text = "Simulation Trigger"
 
 [node name="LogSummary" type="Button" parent="Control/Buttons"]
+visible = false
 margin_left = -1.0
 margin_top = 148.0
 margin_right = 228.0
@@ -123,11 +146,22 @@ margin_bottom = 205.0
 text = "Log Summary"
 
 [node name="ResetSummary" type="Button" parent="Control/Buttons"]
+visible = false
 margin_left = -1.0
 margin_top = 214.0
 margin_right = 228.0
 margin_bottom = 271.0
 text = "Reset Summary"
+
+[node name="TimerProgress" type="ProgressBar" parent="Control"]
+margin_left = 580.0
+margin_top = 188.0
+margin_right = 807.0
+margin_bottom = 202.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_styles/fg = SubResource( 1 )
+step = 0.5
+value = 10.0
 
 [editable path="TeamPositionings/Default"]
 [editable path="TeamPositionings/Forward"]

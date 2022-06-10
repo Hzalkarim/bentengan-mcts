@@ -3,7 +3,7 @@ using System;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
-using Bentengan;
+using Bentengan.Utility;
 
 namespace Bentengan.Mcts
 {
@@ -208,6 +208,7 @@ namespace Bentengan.Mcts
                 {
                     i++;
                     to = person.MovementArea[_rnd.RandiRange(0, l - 1)] + person.cellPosition;
+                    //to = person.cellPosition.CalculateStrategy((MctsStrategy)_rnd.RandiRange(0, 4), teamName);
                     if (_tos.Contains(to)) 
                     {
                         //GD.Print("Failed to move");

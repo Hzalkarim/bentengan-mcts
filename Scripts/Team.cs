@@ -38,7 +38,7 @@ namespace Bentengan
             int l = arena.Length;
 
             var personPiecePackedScene = GD.Load<PackedScene>("res://Scenes/PersonPiece.tscn");
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < _initPersonPiecePos.Count; i++)
             {
                 var person = personPiecePackedScene.Instance<PersonPiece>();
                 person.Name = $"{TeamName}_{TEAM_PERSON_SUFFIX}";
