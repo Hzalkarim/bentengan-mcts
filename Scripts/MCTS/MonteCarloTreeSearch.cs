@@ -17,6 +17,7 @@ namespace Bentengan.Mcts
 
         [Export]
         private string _teamName;
+        private string _opponentTeamName;
         [Export]
         private int _limitVisit;
         [Export]
@@ -25,6 +26,8 @@ namespace Bentengan.Mcts
         private float _processQuotaFactor;
 
         public MctsNode Root { get; set; }
+        public SimulatedArena SimArena => _simulatedArena;
+        public string TeamName => _teamName;
         public bool IsActive { get; private set; }
 
         public int LimitVisit 
@@ -34,7 +37,7 @@ namespace Bentengan.Mcts
         }
 
         public event Action onFinishGenerateTreeEvent;
-        public event Action onBackpropagationEndEvent;
+        public event Action<MonteCarloTreeSearch> onBackpropagationEndEvent;
 
         public override void _Ready()
         {
@@ -47,48 +50,53 @@ namespace Bentengan.Mcts
 
         }
 
+        public override void _Process(float delta)
+        {
+            if (!IsActive) return;
+
+            _frameQuota = Mathf.Clamp((int) (_processQuotaFactor / delta), 0, 610);
+            //GD.Print($"Process-Frame quota {_frameQuota}");
+            _simulatedArena.RunSimulation(_frameQuota);
+        }
+
         public void Init()
         {
             Root = new MctsNode();
             MctsStrategy[] hehe = new MctsStrategy[4]
             {
-                MctsStrategy.CaptureCastle,
                 MctsStrategy.CaptureOpponent,
                 MctsStrategy.BackToCastle,
-                MctsStrategy.RescueTeam
+                MctsStrategy.RescueTeam,
+                MctsStrategy.CaptureCastle,
             };
 
             _strategyCross = from x in hehe from y in hehe from z in hehe select new MctsStrategy[3] {x, y, z};
 
-            _simulatedArena = GetNode<SimulatedArena>("../../SimulatedArena");
+            _simulatedArena = GetNode<SimulatedArena>("../SimulatedArena");
+            _opponentTeamName = _simulatedArena.ArenaData.teamDatas[0].teamName.Equals(_teamName) ? 
+                _simulatedArena.ArenaData.teamDatas[1].teamName :
+                _simulatedArena.ArenaData.teamDatas[0].teamName;
             
         }
 
         public void RegisterToSimulatedArenaEvents()
         {
             _simulatedArena.onRoundStartEvent += OnRoundStart;
-            _simulatedArena.onSimulationEndWithNoHighlightEvent += onSimulationEndWithNoHighlight;
+            _simulatedArena.onSimulationEndWithNoHighlightEvent += OnSimulationEndWithNoHighlight;
             _simulatedArena.AddGameplayHighlightListener(OnGameplayHighlight);
         }
 
         public void UnregisterToSimulatedArenaEvents()
         {
             _simulatedArena.onRoundStartEvent -= OnRoundStart;
-            _simulatedArena.onSimulationEndWithNoHighlightEvent -= onSimulationEndWithNoHighlight;
+            _simulatedArena.onSimulationEndWithNoHighlightEvent -= OnSimulationEndWithNoHighlight;
             _simulatedArena.RemoveGameplayHighlightListener(OnGameplayHighlight);
         }
 
-        public override void _Process(float delta)
-        {
-            if (!IsActive) return;
-
-            _frameQuota = (int) (_processQuotaFactor / delta);
-            //GD.Print($"Process-Frame quota {_frameQuota}");
-            _simulatedArena.RunSimulation(_frameQuota);
-        }
 
         public void StopSimulation()
         {
+            IsActive = false;
             _simulatedArena.StopSimulation();
         }
 
@@ -121,8 +129,22 @@ namespace Bentengan.Mcts
 
         public MctsNode GetMaxAvgChildNode(MctsNode parentNode)
         {
-            float maxAvg = parentNode.childs.Max(n => n.AverageScore);
-            return parentNode.childs.First(n => n.AverageScore == maxAvg);
+            int maxIdx = -1;
+            float max = float.MinValue;
+            for (int i = 0; i < parentNode.childs.Count; i++)
+            {
+                if (parentNode.childs[i].timesVisit == 0)
+                    continue;
+                float avg = parentNode.childs[i].AverageScore;
+                if (avg > max)
+                {
+                    max = avg;
+                    maxIdx = i;
+                }
+            }
+            if (maxIdx == -1)
+                return null;
+            return parentNode.childs[maxIdx];
         }
 
         public MctsNode GetUnvisitedChildNode(MctsNode parentNode)
@@ -130,13 +152,13 @@ namespace Bentengan.Mcts
             return parentNode.childs.First(c => c.timesVisit == 0);
         }
 
-        public void GenerateTreeFromRoot()
+        public void GenerateTreeFromRoot(MctsNode opponentNode = null)
         {
             _simulatedArena.ResetArenaData();
-            Selection(Root);
+            Selection(Root, opponentNode);
         }
 
-        private void Selection(MctsNode node, Action opponentMove = null)
+        private void Selection(MctsNode node, MctsNode oppNode = null)
         {
             if (node.parent != null)
             {
@@ -148,18 +170,20 @@ namespace Bentengan.Mcts
                     _simulatedArena.TryRegisterMove(_teamName, pos[i], node.registeredMove[i]);
                 }
 
-                if (opponentMove == null)
+                if (oppNode != null && oppNode.registeredMove != null)
                 {
-                    string oppTeam = _simulatedArena.ArenaData.teamDatas[0].teamName.Equals(_teamName) ? 
-                        _simulatedArena.ArenaData.teamDatas[1].teamName :
-                        _simulatedArena.ArenaData.teamDatas[0].teamName;
-
-                    StrategyAlgorithmCalculator.SetArenaData(_simulatedArena.ArenaData);
-                    _simulatedArena.RegisterRandomTeamMove(oppTeam);
+                    int[] oppPos = _simulatedArena.ArenaData.personPieceDatas
+                    .Where(p => !p.teamName.Equals(_teamName))
+                    .Select(i => i.cellPosition).ToArray();
+                    for (int i = 0; i < oppPos.Length; i++)
+                    {
+                        _simulatedArena.TryRegisterMove(_opponentTeamName, oppPos[i], oppNode.registeredMove[i]);
+                    }
                 }
                 else
                 {
-                    opponentMove.Invoke();
+                    StrategyAlgorithmCalculator.SetArenaData(_simulatedArena.ArenaData);
+                    _simulatedArena.RegisterRandomTeamMove(_opponentTeamName);
                 }
                 _simulatedArena.RunSingleRound();
             }
@@ -170,16 +194,21 @@ namespace Bentengan.Mcts
                 return;
             }
 
-
             MctsNode nextNode = node.timesVisit < node.childs.Count ?
                 GetUnvisitedChildNode(node) : GetMaxUctChildNode(node);
-            //GD.Print($"Selecting: {nextNode.ToString()}");
-            Selection(nextNode, opponentMove);
+            MctsNode oppNextNode = null;
+            if (oppNode != null && oppNode.childs != null)
+            {
+                oppNextNode = oppNode.timesVisit < oppNode.childs.Count ?
+                    GetUnvisitedChildNode(oppNode) : GetMaxUctChildNode(oppNode);
+            }
+            Selection(nextNode, oppNode);
         }
 
         private void Expansion(MctsNode node)
         {
             var persons = _simulatedArena.ArenaData.personPieceDatas.Where(p => p.teamName.Equals(_teamName)).ToArray();
+            //GD.Print($"Expansion {_teamName}: personLen {persons.Length}");
             StrategyAlgorithmCalculator.SetArenaData(_simulatedArena.ArenaData);
 
             foreach (MctsStrategy[] strat in _strategyCross)
@@ -210,7 +239,10 @@ namespace Bentengan.Mcts
                 _simulatedArena.TryRegisterMove(_teamName, teamPersons[i], node.registeredMove[i]);
             }
             
+            // if (Root.timesVisit % 50 == 0)
+            //     GD.Print($"Start simulation {_teamName}: {Root.timesVisit}");
             _nodeToSimulate = node;
+            _simulatedArena.SetActive(true);
             IsActive = true;
         }
 
@@ -225,28 +257,28 @@ namespace Bentengan.Mcts
             }
             else
             {
-                onBackpropagationEndEvent?.Invoke();
-                if (_frameQuota <= 0)
-                {
-                    if (Root.timesVisit < _limitVisit)
-                    {
-                        IsActive = true;
-                    }
-                    return;
-                }
+                onBackpropagationEndEvent?.Invoke(this);
+                // if (_frameQuota <= 0)
+                // {
+                //     if (Root.timesVisit < _limitVisit)
+                //     {
+                //         IsActive = true;
+                //     }
+                //     return;
+                // }
 
-                if (node.timesVisit < _limitVisit)
-                {
-                    _simulatedArena.ResetArenaData();
-                    Selection(Root);
-                }
-                else if (node.timesVisit == _limitVisit)
-                {
-                    onFinishGenerateTreeEvent?.Invoke();
-                    // GD.Print($"AvgScore: {node.AverageScore} - Times Visit: {node.timesVisit}");
-                    // MctsNode max = GetMaxScoreChildNode(Root);
-                    // GD.Print($"Best Move: {max.ToString()} with avgscore {max.AverageScore} visited {max.timesVisit}");
-                }
+                // if (node.timesVisit < _limitVisit)
+                // {
+                //     _simulatedArena.ResetArenaData();
+                //     Selection(Root);
+                // }
+                // else if (node.timesVisit == _limitVisit)
+                // {
+                //     onFinishGenerateTreeEvent?.Invoke();
+                //     // GD.Print($"AvgScore: {node.AverageScore} - Times Visit: {node.timesVisit}");
+                //     // MctsNode max = GetMaxScoreChildNode(Root);
+                //     // GD.Print($"Best Move: {max.ToString()} with avgscore {max.AverageScore} visited {max.timesVisit}");
+                // }
             }
         }
 
@@ -272,16 +304,16 @@ namespace Bentengan.Mcts
             switch (highlight)
             {
                 case GameplayHighlight.GameWon:
-                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? 1 : -.5f);
+                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? .5f : -.5f);
                     break;
                 case GameplayHighlight.GameDraw:
                     Backpropagation(_nodeToSimulate, 0);
                     break;
                 case GameplayHighlight.PersonCaptured:
-                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? -.9f : .5f);
+                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? -1 : 3);
                     break;
                 case GameplayHighlight.PersonRescued:
-                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? .9f : -.3f);
+                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? 1 : -1);
                     break;
             }
         }
@@ -291,7 +323,7 @@ namespace Bentengan.Mcts
             _frameQuota--;
         }
 
-        private void onSimulationEndWithNoHighlight()
+        private void OnSimulationEndWithNoHighlight()
         {
             //Selection(Root);
             IsActive = false;

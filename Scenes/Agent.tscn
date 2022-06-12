@@ -1,0 +1,40 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Scripts/MCTS/MonteCarloTreeSearch.cs" type="Script" id=1]
+[ext_resource path="res://Scripts/AdversaryAgent.cs" type="Script" id=2]
+[ext_resource path="res://Scripts/MCTS/SimulatedArena.cs" type="Script" id=3]
+
+[node name="Agent" type="Node2D"]
+script = ExtResource( 2 )
+_teamName = "AITeam"
+isActive = true
+_mctsName = "MCTS"
+_mctsOpponentName = "MCTS_ForOpponent"
+
+[node name="MCTS" type="Node2D" parent="."]
+
+[node name="SimulatedArena" type="Node2D" parent="MCTS"]
+script = ExtResource( 3 )
+_simulationFactorConstant = 3.0
+_summTeamName = "AITeam"
+
+[node name="MCTS" type="Node2D" parent="MCTS"]
+script = ExtResource( 1 )
+_teamName = "AITeam"
+_limitVisit = 2000
+_initOnReady = true
+_processQuotaFactor = 2.0
+
+[node name="MCTS_ForOpponent" type="Node2D" parent="."]
+
+[node name="SimulatedArena" type="Node2D" parent="MCTS_ForOpponent"]
+script = ExtResource( 3 )
+_simulationFactorConstant = 3.0
+_summTeamName = "AITeam"
+
+[node name="MCTS" type="Node2D" parent="MCTS_ForOpponent"]
+script = ExtResource( 1 )
+_teamName = "Player"
+_limitVisit = 2000
+_initOnReady = true
+_processQuotaFactor = 2.0

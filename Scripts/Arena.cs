@@ -148,7 +148,7 @@ namespace Bentengan
                     SendToJail(duo[0]);
                     SendToJail(duo[1]);
                 }
-                else if (duo[0].LiveTime > duo[1].LightMask)
+                else if (duo[0].LiveTime > duo[1].LiveTime)
                 {
                     SendToJail(duo[0]);
                 }

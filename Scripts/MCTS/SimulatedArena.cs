@@ -79,6 +79,7 @@ namespace Bentengan.Mcts
         public void StopSimulation()
         {
             _isSimulating = false;
+            _isActive = false;
         }
 
         public void AddGameplayHighlightListener(Action<string, GameplayHighlight> action)
@@ -160,6 +161,7 @@ namespace Bentengan.Mcts
         {
             //GD.Print("Similation started");
             //_arenaData = _arena.ToData();
+            if (!IsActive) return;
 
             int i = 0;
             _rnd.Randomize();
@@ -169,7 +171,7 @@ namespace Bentengan.Mcts
             {
                 i++;
                 _moveCount++;
-                if (_moveCount % 5000 == 0)
+                if (_moveCount % 500 == 0)
                 {
                     GD.Print($"Total move counts: {_moveCount} - FPS {Engine.GetFramesPerSecond()}");
                     _isShowLog = true;

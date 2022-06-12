@@ -38,13 +38,13 @@ namespace Bentengan
             var cells = _arena.Cells;
 
             _opponentAgent = GetNode<AdversaryAgent>("../Agents/OpponentAgent");
-            //_playerAgent = GetNode<AdversaryAgent>("../Agents/PlayerAgent");
-            _simulatedArena = GetNode<SimulatedArena>("../Agents/SimulatedArena");
+            _playerAgent = GetNode<AdversaryAgent>("../Agents/PlayerAgent");
+            //_simulatedArena = GetNode<SimulatedArena>("../Agents/SimulatedArena");
 
-            foreach (Cell cell in cells)
-            {
-                cell.OnClickedEvent += OnCellClicked;
-            }
+            // foreach (Cell cell in cells)
+            // {
+            //     cell.OnClickedEvent += OnCellClicked;
+            // }
 
             var buttons = GetNode("../Control/Buttons");
             buttons.GetNode<BaseButton>("SimulationTrigger").Connect("button_up", this, "OnSimulationTriggerButtonClicked");
@@ -62,6 +62,7 @@ namespace Bentengan
             _opponentAgent.Mcts.onBackpropagationEndEvent += OnRoundEnd;
 
             _opponentAgent.GenerateTree();
+            _playerAgent.GenerateTree();
         }
 
         // private void OnPlayerButtonClicked()
@@ -97,6 +98,8 @@ namespace Bentengan
             _executeButton.Disabled = true;
             _timer.Start();
             //_opponentAgent.RegisterRandomMove();
+            GD.Print($"Opponent root visit {_opponentAgent.Mcts.Root.timesVisit}");
+            _playerAgent.RegisterBestMove();
             _opponentAgent.RegisterBestMove();
             // if (_isRandom)
             //     _playerAgent.RegisterRandomMove();
@@ -115,6 +118,7 @@ namespace Bentengan
             _arena.UpdateAllPersonPieceInvalidMovement();
 
             OnSimStart();
+            _playerAgent.GenerateTree();
             _opponentAgent.GenerateTree();
         }
 
@@ -170,8 +174,8 @@ namespace Bentengan
 
         private void OnTimerTick()
         {
-            _executeButton.Disabled = false;
-
+            //_executeButton.Disabled = false;
+            OnExecuteButtonClicked();
         }
 
         private void OnSimStart()
@@ -180,7 +184,7 @@ namespace Bentengan
             _roundCount = 0;
         }
 
-        private void OnRoundEnd()
+        private void OnRoundEnd(MonteCarloTreeSearch mcts)
         {
             _roundCount++;
             _timerProgressBar.Value = _roundCount * 100 / _opponentAgent.Mcts.LimitVisit;
