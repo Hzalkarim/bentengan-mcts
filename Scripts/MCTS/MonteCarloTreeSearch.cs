@@ -10,6 +10,7 @@ namespace Bentengan.Mcts
     public class MonteCarloTreeSearch : Node
     {
         private SimulatedArena _simulatedArena;
+        private SimulatedArenaManager _simArenaManager;
         private IEnumerable<MctsStrategy[]> _strategyCross;
 
         private int _frameQuota;
@@ -50,22 +51,23 @@ namespace Bentengan.Mcts
 
         }
 
-        public override void _Process(float delta)
-        {
-            if (!IsActive) return;
+        // public override void _Process(float delta)
+        // {
+        //     if (!IsActive) return;
 
-            _frameQuota = Mathf.Clamp((int) (_processQuotaFactor / delta), 0, 610);
-            //GD.Print($"Process-Frame quota {_frameQuota}");
-            _simulatedArena.RunSimulation(_frameQuota);
-        }
+        //     _frameQuota = Mathf.Clamp((int) (_processQuotaFactor / delta), 0, 610);
+        //     //GD.Print($"Process-Frame quota {_frameQuota}");
+        //     _simulatedArena.RunSimulation(_frameQuota);
+        // }
 
         public void Init()
         {
             Root = new MctsNode();
-            MctsStrategy[] hehe = new MctsStrategy[4]
+            MctsStrategy[] hehe = new MctsStrategy[5]
             {
                 MctsStrategy.CaptureOpponent,
                 MctsStrategy.BackToCastle,
+                MctsStrategy.AvoidOpponent,
                 MctsStrategy.RescueTeam,
                 MctsStrategy.CaptureCastle,
             };
@@ -73,6 +75,7 @@ namespace Bentengan.Mcts
             _strategyCross = from x in hehe from y in hehe from z in hehe select new MctsStrategy[3] {x, y, z};
 
             _simulatedArena = GetNode<SimulatedArena>("../SimulatedArena");
+            _simArenaManager = GetNode<SimulatedArenaManager>("/root/Main/SimulatedArenaManager");
             _opponentTeamName = _simulatedArena.ArenaData.teamDatas[0].teamName.Equals(_teamName) ? 
                 _simulatedArena.ArenaData.teamDatas[1].teamName :
                 _simulatedArena.ArenaData.teamDatas[0].teamName;
@@ -83,14 +86,15 @@ namespace Bentengan.Mcts
         {
             _simulatedArena.onRoundStartEvent += OnRoundStart;
             _simulatedArena.onSimulationEndWithNoHighlightEvent += OnSimulationEndWithNoHighlight;
-            _simulatedArena.AddGameplayHighlightListener(OnGameplayHighlight);
+            _simulatedArena.onSimulationEndHighlightedEvent += OnGameplayHighlight;
         }
 
         public void UnregisterToSimulatedArenaEvents()
         {
             _simulatedArena.onRoundStartEvent -= OnRoundStart;
             _simulatedArena.onSimulationEndWithNoHighlightEvent -= OnSimulationEndWithNoHighlight;
-            _simulatedArena.RemoveGameplayHighlightListener(OnGameplayHighlight);
+            _simulatedArena.onSimulationEndHighlightedEvent -= OnGameplayHighlight;
+
         }
 
 
@@ -124,6 +128,8 @@ namespace Bentengan.Mcts
                     maxIdx = i;
                 }
             }
+            if (maxIdx == -1)
+                return null;
             return parentNode.childs[maxIdx];
         }
 
@@ -149,6 +155,7 @@ namespace Bentengan.Mcts
 
         public MctsNode GetUnvisitedChildNode(MctsNode parentNode)
         {
+            if (parentNode == null) return null;
             return parentNode.childs.First(c => c.timesVisit == 0);
         }
 
@@ -160,6 +167,12 @@ namespace Bentengan.Mcts
 
         private void Selection(MctsNode node, MctsNode oppNode = null)
         {
+            if (node == null)
+            {
+                Root = new MctsNode();
+                Selection(Root);
+                return;
+            }
             if (node.parent != null)
             {
                 int[] pos = _simulatedArena.ArenaData.personPieceDatas
@@ -244,6 +257,8 @@ namespace Bentengan.Mcts
             _nodeToSimulate = node;
             _simulatedArena.SetActive(true);
             IsActive = true;
+
+            _simArenaManager.QueueSimulation(_simulatedArena);
         }
 
         private void Backpropagation(MctsNode node, float scoreUpdate)
@@ -304,16 +319,16 @@ namespace Bentengan.Mcts
             switch (highlight)
             {
                 case GameplayHighlight.GameWon:
-                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? .5f : -.5f);
+                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? 1 : 0);
                     break;
                 case GameplayHighlight.GameDraw:
                     Backpropagation(_nodeToSimulate, 0);
                     break;
                 case GameplayHighlight.PersonCaptured:
-                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? -1 : 3);
+                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? 0 : 1);
                     break;
                 case GameplayHighlight.PersonRescued:
-                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? 1 : -1);
+                    Backpropagation(_nodeToSimulate, teamName.Equals(_teamName) ? 1 : 0);
                     break;
             }
         }

@@ -22,6 +22,9 @@ namespace Bentengan.Mcts
         private bool _isShowLog = false;
         private bool _isSimulating = false;
 
+        private string _lastTeamHighlight;
+        private GameplayHighlight _lastHighLight;
+
         [Export]
         private bool _isActive = false;
         [Export]
@@ -34,6 +37,7 @@ namespace Bentengan.Mcts
         public event Action onRoundStartEvent;
         public event Action onRoundEndEvent;
         public event Action onSimulationStartEvent;
+        public event Action<string, GameplayHighlight> onSimulationEndHighlightedEvent;
         public event Action onSimulationEndWithNoHighlightEvent;
 
         public ArenaData ArenaData => _arenaData;
@@ -44,7 +48,7 @@ namespace Bentengan.Mcts
         {
             GD.Print("Ready Simulated Arena");
 
-            _battleFlowManager = GetNode<BattleFlowManager>("/root/Main/BattleFlowManagers/Simulated");
+            _battleFlowManager = GetNode<BattleFlowManager>("../BattleFlowManager");
             _arena = GetNode<Arena>("/root/Main/Arena");
             _tos = new List<int>(_teamMemberCount);
             _summ.teamName = _summTeamName;
@@ -89,7 +93,7 @@ namespace Bentengan.Mcts
 
         public void RemoveGameplayHighlightListener(Action<string, GameplayHighlight> action)
         {
-            _battleFlowManager.gameplayHighlightEvent += action;
+            _battleFlowManager.gameplayHighlightEvent -= action;
         }
 
         public void SetPersonData(int currentPos, int nextPos, int liveTime)
@@ -112,7 +116,14 @@ namespace Bentengan.Mcts
 
         public bool TryRegisterMove(string teamName, int from, int to)
         {
-            if (_battleFlowManager.RegisteredMove.Any(p => p.teamName.Equals(teamName) && p.to == to))
+            var teamMove = _battleFlowManager.RegisteredMove.Where(m => m.teamName.Equals(teamName));
+            var teamPrevPos = _arenaData.personPieceDatas.Where(t => t.teamName.Equals(teamName)).Select(p => p.cellPosition);
+            if (teamMove.Any(p => p.to == to))
+            {
+                return false;
+            }
+
+            if (teamPrevPos.Contains(to))
             {
                 return false;
             }
@@ -134,15 +145,24 @@ namespace Bentengan.Mcts
             ExecuteAllPersonMoves();
             UpdatePersonInvalidMovement();
 
-            CastleCaptured();
-            if (!_isSimulating) return;
-            UpdatePersonLiveTime();
+            if (_isSimulating)
+            {
+                CastleCaptured();            
+                UpdatePersonLiveTime();
+            }
 
-            SendRescueeToCastle();
-            UpdatePersonInvalidMovement();
+            if (_isSimulating)
+            {
+                SendRescueeToCastle();
+                UpdatePersonInvalidMovement();
+            }
 
-            SendCapturedToJail();
-            UpdatePersonInvalidMovement();
+            if (_isSimulating)
+            {
+                SendCapturedToJail();
+                UpdatePersonInvalidMovement();
+            }
+
 
             onRoundEndEvent?.Invoke();
         }
@@ -171,7 +191,7 @@ namespace Bentengan.Mcts
             {
                 i++;
                 _moveCount++;
-                if (_moveCount % 500 == 0)
+                if (_moveCount % 10000 == 0)
                 {
                     GD.Print($"Total move counts: {_moveCount} - FPS {Engine.GetFramesPerSecond()}");
                     _isShowLog = true;
@@ -181,7 +201,11 @@ namespace Bentengan.Mcts
 
             }
 
-            if (_isSimulating)
+            if (!_isSimulating)
+            {
+                onSimulationEndHighlightedEvent?.Invoke(_lastTeamHighlight, _lastHighLight);
+            }
+            else
             {
                 onSimulationEndWithNoHighlightEvent?.Invoke();
                 _isSimulating = false;
@@ -343,6 +367,8 @@ namespace Bentengan.Mcts
         {
             _simulationCount++;
             _isSimulating = false;
+            _lastTeamHighlight = teamName;
+            _lastHighLight = highlight;
             _summ.AddCount(highlight, teamName);
             if (!_isShowLog) return;
             switch (highlight)

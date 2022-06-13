@@ -20,6 +20,7 @@ namespace Bentengan
         private SimulatedArena _simulatedArena;
 
         private Timer _timer;
+        private Timer _roundTimer;
         private BaseButton _executeButton;
 
         private int _roundCount;
@@ -55,6 +56,8 @@ namespace Bentengan
 
             _timer = buttons.GetNode<Timer>("../Timer");
             _timer.Connect("timeout", this, "OnTimerTick");
+            _roundTimer = buttons.GetNode<Timer>("../RoundTimer");
+
 
             _timerProgressBar = buttons.GetNode<ProgressBar>("../TimerProgress");
             _timerProgressBar.Value = 0;
@@ -95,6 +98,11 @@ namespace Bentengan
 
         private void OnExecuteButtonClicked()
         {
+            RegisterAndUpdateMovement();
+        }
+
+        private void RegisterAndUpdateMovement()
+        {
             _executeButton.Disabled = true;
             _timer.Start();
             //_opponentAgent.RegisterRandomMove();
@@ -111,11 +119,33 @@ namespace Bentengan
             
             _arena.UpdateAllPersonPieceLiveTime();
 
+            _roundTimer.Connect("timeout", this, "UpdateRescuee");
+            _roundTimer.Start();
+        }
+
+        private void UpdateRescuee()
+        {
+            _roundTimer.Disconnect("timeout", this, "UpdateRescuee");
+
             _arena.SendAllRescueeToCastle();
             _arena.UpdateAllPersonPieceInvalidMovement();
 
+            _roundTimer.Connect("timeout", this, "UpdateCaptured");
+            _roundTimer.Start();
+        }
+        private void UpdateCaptured()
+        {
+            _roundTimer.Disconnect("timeout", this, "UpdateCaptured");
+
             _arena.SendAllCapturedToJail();
             _arena.UpdateAllPersonPieceInvalidMovement();
+
+            _roundTimer.Connect("timeout", this, "UpdateAiTree");
+            _roundTimer.Start();
+        }
+        private void UpdateAiTree()
+        {
+            _roundTimer.Disconnect("timeout", this, "UpdateAiTree");
 
             OnSimStart();
             _playerAgent.GenerateTree();

@@ -35,6 +35,13 @@ namespace Bentengan.Utility
             return ApproachNearestTarget(opponentTeamPerson, personCellPos);
         }
 
+        public static int AvoidOpponentPerson(this int personCellPos, string teamName)
+        {
+            int[] opponentTeamPerson = _arenaData.personPieceDatas
+                .Where(p => !p.teamName.Equals(teamName) && !p.isCaptured).Select(q => q.cellPosition).ToArray();
+            return ApproachNearestTarget(opponentTeamPerson, personCellPos, isAvoid: true);
+        }
+
         #region LOW PRIORITY
         public static int Standby(this int personCellPos, string teamName)
         {
@@ -59,6 +66,8 @@ namespace Bentengan.Utility
                     return personCellPos.BackToOwnCastle(teamName);
                 case MctsStrategy.CaptureOpponent:
                     return personCellPos.CaptureOpponentPerson(teamName);
+                case MctsStrategy.AvoidOpponent:
+                    return personCellPos.AvoidOpponentPerson(teamName);
                 case MctsStrategy.RescueTeam:
                     return personCellPos.RescueTeamPerson(teamName);
                 case MctsStrategy.Standby:
@@ -68,7 +77,7 @@ namespace Bentengan.Utility
             }
         }
 
-        private static int ApproachNearestTarget(int[] targetGroup, int cellPos)
+        private static int ApproachNearestTarget(int[] targetGroup, int cellPos, bool isAvoid = false)
         {
             double d = double.MaxValue;
             int idx = -1;
@@ -82,7 +91,7 @@ namespace Bentengan.Utility
                 }
             }
 
-            return idx == -1 ? 0 : ApproachTarget(targetGroup[idx], cellPos);
+            return idx == -1 ? 0 : ApproachTarget(targetGroup[idx], cellPos, isAvoid);
         }
 
         private static double CellSquareDistance(int a, int b)
@@ -93,21 +102,22 @@ namespace Bentengan.Utility
             return Math.Pow(xDist, 2) + Math.Pow(yDist, 2);
         }
 
-        private static int ApproachTarget(int target, int source)
+        private static int ApproachTarget(int target, int source, bool isAvoid = false)
         {
             int xDist = target % _arenaData.length - source % _arenaData.length;
             int yDist = (int)(target / _arenaData.length) - (int)(source / _arenaData.length);
 
+            int avoidFactor = isAvoid ? -1 : 1;
             int move = 0;
             if (xDist > 0)
-                move++;
+                move += 1 * avoidFactor;
             else if (xDist < 0)
-                move--;
+                move -= 1 * avoidFactor;
 
             if (yDist > 0)
-                move += _arenaData.length;
+                move += _arenaData.length * avoidFactor;
             else if (yDist < 0)
-                move -= _arenaData.length;
+                move -= _arenaData.length * avoidFactor;
 
             return move + source;
         }
@@ -115,6 +125,6 @@ namespace Bentengan.Utility
 
     public enum MctsStrategy
     {
-        CaptureCastle, BackToCastle, CaptureOpponent, RescueTeam, Standby
+        CaptureCastle, BackToCastle, CaptureOpponent, AvoidOpponent, RescueTeam, Standby
     }
 }

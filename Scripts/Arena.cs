@@ -38,7 +38,7 @@ namespace Bentengan
         {
             GD.Print("Ready: Arena");
 
-            _battleFlowManager = GetNode<BattleFlowManager>("../BattleFlowManagers/Arena");
+            _battleFlowManager = GetNode<BattleFlowManager>("../BattleFlowManager");
             GenerateCell();
 
             var playerTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/PlayerTeam");
@@ -93,7 +93,14 @@ namespace Bentengan
 
         public bool TryRegisterMove(string teamName, int from, int to)
         {
-            if (_battleFlowManager.RegisteredMove.Any(p => p.teamName.Equals(teamName) && p.to == to))
+            var teamMove = _battleFlowManager.RegisteredMove.Where(m => m.teamName.Equals(teamName));
+            var teamPrevPos = _teams.First(t => t.TeamName.Equals(teamName)).PersonPieces.Select(p => p.CellPosition);
+            if (teamMove.Any(p => p.to == to))
+            {
+                return false;
+            }
+
+            if (teamPrevPos.Contains(to))
             {
                 return false;
             }

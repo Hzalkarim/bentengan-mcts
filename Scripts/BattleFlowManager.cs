@@ -18,7 +18,7 @@ namespace Bentengan
 
         public override void _Ready()
         {
-            _evaluator = GetNode<BattleEvaluator>("../../BattleEvaluator");
+            _evaluator = GetNode<BattleEvaluator>("../BattleEvaluator");
         }
 
         public int FindOwnEmptyCastle(PersonPieceData rescuee, ArenaData arena)
