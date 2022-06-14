@@ -26,7 +26,7 @@ namespace Bentengan.Mcts
         private GameplayHighlight _lastHighLight;
 
         [Export]
-        private string _arenaPathFromRoot = "/root/Main";
+        private string _arenaPathFromRoot;
         [Export]
         private bool _isActive = false;
         [Export]

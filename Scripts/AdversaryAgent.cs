@@ -15,6 +15,8 @@ namespace Bentengan
 
         [Export]
         private string _teamName;
+        [Export]
+        private string _teamNodeName;
         private string _opponentTeamName;
         [Export]
         private bool isActive;
@@ -38,7 +40,7 @@ namespace Bentengan
         {
             if (!isActive) return;
             _arena = GetNode<Arena>("../../Arena");
-            _team = GetNode<Team>($"../../TeamPositionings/{_arena.TeamPositionings}/{_teamName}");
+            _team = GetNode<Team>($"../../TeamPositionings/{_arena.TeamPositionings}/{_teamNodeName}");
 
             _mcts = GetNode<MonteCarloTreeSearch>($"{_mctsNodeName}/MCTS");
             _mcts.RegisterToSimulatedArenaEvents();

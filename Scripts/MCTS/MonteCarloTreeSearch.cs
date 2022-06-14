@@ -20,6 +20,8 @@ namespace Bentengan.Mcts
         private string _teamName;
         private string _opponentTeamName;
         [Export]
+        private bool _isOnePerson;
+        [Export]
         private int _limitVisit;
         [Export]
         private bool _initOnReady;
@@ -64,7 +66,10 @@ namespace Bentengan.Mcts
         {
             Root = new MctsNode();
 
-            _strategyCross = StrategyExpansionHelper.Instance.RoleBased;
+            if (_isOnePerson)
+                _strategyCross = StrategyExpansionHelper.Instance.RoleBasedOnePerson;
+            else
+                _strategyCross = StrategyExpansionHelper.Instance.RoleBased;
 
             _simulatedArena = GetNode<SimulatedArena>("../SimulatedArena");
             //_simArenaManager = GetNode<SimulatedArenaManager>("/root/Main/SimulatedArenaManager");
