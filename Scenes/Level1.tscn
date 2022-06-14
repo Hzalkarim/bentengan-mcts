@@ -23,8 +23,8 @@ corner_radius_bottom_left = 2
 
 [node name="SimulatedArenaManager" type="Node2D" parent="."]
 script = ExtResource( 7 )
-_processFactor = 2
-_simPerProcessLimit = 6
+_processFactor = 5
+_simPerProcessLimit = 4
 
 [node name="BattleEvaluator" type="Node2D" parent="."]
 script = ExtResource( 4 )
@@ -90,22 +90,38 @@ _initPersonPiecePos = [ 88, 63, 65 ]
 [node name="Agents" type="Node2D" parent="."]
 
 [node name="OpponentAgent" parent="Agents" instance=ExtResource( 6 )]
+_mctsNodeName = "MCTS"
+_hasOpponent = true
+_mctsOpponentNodeName = "MCTS_ForOpponent"
+
+[node name="MCTS" parent="Agents/OpponentAgent/MCTS" index="3"]
+_limitVisit = 200
 
 [node name="MCTS" parent="Agents/OpponentAgent/MCTS_ForOpponent" index="3"]
 _teamName = "PlayerTeam"
+_limitVisit = 200
 
 [node name="PlayerAgent" parent="Agents" instance=ExtResource( 6 )]
 _teamName = "PlayerTeam"
+_mctsNodeName = "MCTS"
+_hasOpponent = true
+_mctsOpponentNodeName = "MCTS_ForOpponent"
 
 [node name="MCTS" parent="Agents/PlayerAgent/MCTS" index="3"]
 _teamName = "PlayerTeam"
+_limitVisit = 200
 
 [node name="MCTS" parent="Agents/PlayerAgent/MCTS_ForOpponent" index="3"]
 _teamName = "AITeam"
+_limitVisit = 200
 
 [node name="PlayerInput" type="Node2D" parent="."]
 script = ExtResource( 3 )
 _selectingTeamName = "Player"
+_firstTeamUseAgent = true
+_firstTeamAgentNodeName = "OpponentAgent"
+_secondTeamUseAgent = true
+_secondTeamAgentNodeName = "PlayerAgent"
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0

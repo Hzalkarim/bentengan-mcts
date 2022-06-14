@@ -14,9 +14,18 @@ namespace Bentengan
         [Export]
         private bool _isRandom;
 
+        [Export]
+        private bool _firstTeamUseAgent;
+        [Export]
+        private string _firstTeamAgentNodeName;
+        [Export]
+        private bool _secondTeamUseAgent;
+        [Export]
+        private string _secondTeamAgentNodeName;
+
         private Arena _arena;
-        private AdversaryAgent _opponentAgent;
-        private AdversaryAgent _playerAgent;
+        private AdversaryAgent _firstTeamAgent;
+        private AdversaryAgent _secondTeamAgent;
         private SimulatedArena _simulatedArena;
 
         private Timer _timer;
@@ -38,8 +47,10 @@ namespace Bentengan
             _arena = GetNode<Arena>("../Arena");
             var cells = _arena.Cells;
 
-            _opponentAgent = GetNode<AdversaryAgent>("../Agents/OpponentAgent");
-            _playerAgent = GetNode<AdversaryAgent>("../Agents/PlayerAgent");
+            if (_firstTeamUseAgent)
+                _firstTeamAgent = GetNode<AdversaryAgent>($"../Agents/{_firstTeamAgentNodeName}");
+            if (_secondTeamUseAgent)
+                _secondTeamAgent = GetNode<AdversaryAgent>($"../Agents/{_secondTeamAgentNodeName}");
             //_simulatedArena = GetNode<SimulatedArena>("../Agents/SimulatedArena");
 
             // foreach (Cell cell in cells)
@@ -62,10 +73,14 @@ namespace Bentengan
             _timerProgressBar = buttons.GetNode<ProgressBar>("../TimerProgress");
             _timerProgressBar.Value = 0;
 
-            _opponentAgent.Mcts.onBackpropagationEndEvent += OnRoundEnd;
+            if (_firstTeamUseAgent)
+                _firstTeamAgent.Mcts.onBackpropagationEndEvent += OnRoundEnd;
+            if (_firstTeamUseAgent)
+                _firstTeamAgent.GenerateTree();
+            if (_secondTeamUseAgent)
+                _secondTeamAgent.GenerateTree();
 
-            _opponentAgent.GenerateTree();
-            _playerAgent.GenerateTree();
+            _timer.Start();
         }
 
         // private void OnPlayerButtonClicked()
@@ -106,9 +121,11 @@ namespace Bentengan
             _executeButton.Disabled = true;
             _timer.Start();
             //_opponentAgent.RegisterRandomMove();
-            GD.Print($"Opponent root visit {_opponentAgent.Mcts.Root.timesVisit}");
-            _playerAgent.RegisterBestMove();
-            _opponentAgent.RegisterBestMove();
+
+            if (_firstTeamUseAgent)
+                _firstTeamAgent.RegisterBestMove();
+            if (_secondTeamUseAgent)
+                _secondTeamAgent.RegisterBestMove();
             // if (_isRandom)
             //     _playerAgent.RegisterRandomMove();
 
@@ -148,8 +165,10 @@ namespace Bentengan
             _roundTimer.Disconnect("timeout", this, "UpdateAiTree");
 
             OnSimStart();
-            _playerAgent.GenerateTree();
-            _opponentAgent.GenerateTree();
+            if (_firstTeamUseAgent)
+                _firstTeamAgent.GenerateTree();
+            if (_secondTeamUseAgent)
+                _secondTeamAgent.GenerateTree();
         }
 
         private void OnCellClicked(Cell cell)
@@ -217,7 +236,7 @@ namespace Bentengan
         private void OnRoundEnd(MonteCarloTreeSearch mcts)
         {
             _roundCount++;
-            _timerProgressBar.Value = _roundCount * 100 / _opponentAgent.Mcts.LimitVisit;
+            _timerProgressBar.Value = _roundCount * 100 / _firstTeamAgent.Mcts.LimitVisit;
         }
     }
 

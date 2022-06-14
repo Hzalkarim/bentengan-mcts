@@ -26,6 +26,8 @@ namespace Bentengan.Mcts
         private GameplayHighlight _lastHighLight;
 
         [Export]
+        private string _arenaPathFromRoot = "/root/Main";
+        [Export]
         private bool _isActive = false;
         [Export]
         private float _simulationFactorConstant;
@@ -49,7 +51,7 @@ namespace Bentengan.Mcts
             GD.Print("Ready Simulated Arena");
 
             _battleFlowManager = GetNode<BattleFlowManager>("../BattleFlowManager");
-            _arena = GetNode<Arena>("/root/Main/Arena");
+            _arena = GetNode<Arena>($"{_arenaPathFromRoot}/Arena");
             _tos = new List<int>(_teamMemberCount);
             _summ.teamName = _summTeamName;
 

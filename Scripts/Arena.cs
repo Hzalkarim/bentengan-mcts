@@ -241,6 +241,8 @@ namespace Bentengan
 
             int[] allPersonPosition = _allPersons.Select(s => s.CellPosition).ToArray();
             int emptyJail = BattleEvaluator.Instance.GetEmptyJail(jailArea.ToArray(), allPersonPosition);
+            if (emptyJail == -1)
+                return;
             person.SetArbitraryMove(emptyJail);
             person.ExecuteMove(Cells[emptyJail]);
 

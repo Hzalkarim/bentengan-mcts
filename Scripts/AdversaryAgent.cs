@@ -19,29 +19,43 @@ namespace Bentengan
         [Export]
         private bool isActive;
         [Export]
-        private string _mctsName;
+        private string _mctsNodeName;
         private MonteCarloTreeSearch _mcts;
         [Export]
-        private string _mctsOpponentName;
+        private bool _hasOpponent;
+        [Export]
+        private string _mctsOpponentNodeName;
         private MonteCarloTreeSearch _mctsOpponent;
 
         public MonteCarloTreeSearch Mcts => _mcts;
 
         public override void _Ready()
         {
+            Init(_hasOpponent);        
+        }
+
+        private void Init(bool hasOpponent)
+        {
             if (!isActive) return;
             _arena = GetNode<Arena>("../../Arena");
             _team = GetNode<Team>($"../../TeamPositionings/{_arena.TeamPositionings}/{_teamName}");
-            _opponentTeamName = _arena.Teams.First(n => !n.TeamName.Equals(_teamName)).TeamName;
 
-            _mcts = GetNode<MonteCarloTreeSearch>($"{_mctsName}/MCTS");
+            _mcts = GetNode<MonteCarloTreeSearch>($"{_mctsNodeName}/MCTS");
             _mcts.RegisterToSimulatedArenaEvents();
-            _mctsOpponent = GetNode<MonteCarloTreeSearch>($"{_mctsOpponentName}/MCTS");
-            _mctsOpponent.RegisterToSimulatedArenaEvents();
 
             _mcts.onFinishGenerateTreeEvent += OnTreeFinished;
-            _mctsOpponent.onFinishGenerateTreeEvent += OnTreeFinished;
             _mcts.onBackpropagationEndEvent += OnOwnBackpropagationEnd;
+
+            if (hasOpponent)
+                InitOpponent();
+        }
+
+        private void InitOpponent()
+        {
+            _opponentTeamName = _arena.Teams.First(n => !n.TeamName.Equals(_teamName)).TeamName;
+            _mctsOpponent = GetNode<MonteCarloTreeSearch>($"{_mctsOpponentNodeName}/MCTS");
+            _mctsOpponent.RegisterToSimulatedArenaEvents();
+            _mctsOpponent.onFinishGenerateTreeEvent += OnTreeFinished;
             _mctsOpponent.onBackpropagationEndEvent += OnOwnBackpropagationEnd;
         }
 
@@ -68,10 +82,12 @@ namespace Bentengan
             }
 
             _mcts.Root = new MctsNode();
-            _mctsOpponent.Root = new MctsNode();
-
             _mcts.GenerateTreeFromRoot();
-            _mctsOpponent.GenerateTreeFromRoot();
+            if (_hasOpponent)
+            {
+                _mctsOpponent.Root = new MctsNode();
+                _mctsOpponent.GenerateTreeFromRoot();
+            }
         }
 
         public void RegisterRandomMove()
@@ -99,10 +115,10 @@ namespace Bentengan
             {
                 if (_mcts.Root.timesVisit < _mcts.LimitVisit)
                 {
-                    _mcts.GenerateTreeFromRoot(_mctsOpponent.Root);
+                    _mcts.GenerateTreeFromRoot(_hasOpponent ? _mctsOpponent.Root : null);
                 }
             }
-            else if (tree == _mctsOpponent)
+            else if (_hasOpponent && tree == _mctsOpponent)
             {
                 if (_mctsOpponent.Root.timesVisit < _mctsOpponent.LimitVisit)
                 {

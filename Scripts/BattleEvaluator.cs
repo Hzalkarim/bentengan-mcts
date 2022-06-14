@@ -122,6 +122,7 @@ namespace Bentengan
 
         public int GetEmptyJail(int[] jailArea, int[] allPerson)
         {
+            if (jailArea.Length == 0) return -1;
             return jailArea.First(i => !allPerson.Contains(i));
         }
 
@@ -132,6 +133,7 @@ namespace Bentengan
 
         public int GetEmptyCastle(int[] castleArea, int[] teamPersons)
         {
+            if (castleArea.Length == 0) return -1;
             return castleArea.First(i => !teamPersons.Contains(i));
         }
 

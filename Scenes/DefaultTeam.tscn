@@ -12,6 +12,8 @@ _castleAreaCellIndex = [ 26, 27, 28, 37, 38, 39, 48, 49, 50 ]
 _jailAreaColor = Color( 0.819608, 0.905882, 0.905882, 1 )
 _jailAreaCellIndex = [ 74, 75, 76, 85, 86, 87 ]
 _initPersonPiecePos = [ 37, 39, 49 ]
+_initPersonPieceLiveTime = [ 0, 0, 0 ]
+_initPersonPieceIsCaptured = [ false, false, false ]
 
 [node name="AITeam" type="Node2D" parent="."]
 position = Vector2( 65, 57 )
@@ -21,3 +23,5 @@ _castleAreaCellIndex = [ 169, 170, 171, 180, 181, 182, 191, 192, 193 ]
 _jailAreaColor = Color( 0.658824, 0.517647, 0.686275, 1 )
 _jailAreaCellIndex = [ 132, 133, 134, 143, 144, 145 ]
 _initPersonPiecePos = [ 180, 182, 170 ]
+_initPersonPieceLiveTime = [ 0, 0, 0 ]
+_initPersonPieceIsCaptured = [ false, false, false ]

@@ -81,6 +81,7 @@ namespace Bentengan
         {
             int emptyCastle = FindOwnEmptyCastle(rescuee, arena);
             //GD.Print($"{rescuee.cellPosition} rescued");
+            if (emptyCastle == -1) return;
             _systematicMove.Add(new PersonPieceMovement(rescuee.teamName, rescuee.cellPosition, emptyCastle));
         }
 
@@ -123,7 +124,8 @@ namespace Bentengan
         {
             int emptyJail = FindOpponentEmptyJail(captured, arena);
             //GD.Print($"{captured.cellPosition} captured");
-
+            if (emptyJail == -1)
+                return;
             _systematicMove.Add(new PersonPieceMovement(captured.teamName, captured.cellPosition, emptyJail));
         }
 

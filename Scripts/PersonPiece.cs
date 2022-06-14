@@ -92,7 +92,8 @@ namespace Bentengan
         public override void _Ready()
         {
             _isCapturedSprite = GetNode<Sprite>("IsCaptured");
-            _isCapturedSprite.Hide();
+            if (!_isCaptured)
+                _isCapturedSprite.Hide();
         }
 
         public void ResetLivetime()
@@ -103,6 +104,11 @@ namespace Bentengan
         public void IncreaseLivetime(int livetime)
         {
             _liveTime += livetime;
+        }
+
+        public void SetIsCaptured(bool val)
+        {
+            _isCaptured = val;
         }
 
         public bool TrySetNextMove(int nextCell)

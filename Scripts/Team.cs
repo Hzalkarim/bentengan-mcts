@@ -24,6 +24,10 @@ namespace Bentengan
         
         [Export(PropertyHint.Range)]
         private List<int> _initPersonPiecePos;
+        [Export(PropertyHint.Range)]
+        private List<int> _initPersonPieceLiveTime;
+        [Export(PropertyHint.Range)]
+        private List<bool> _initPersonPieceIsCaptured;
 
         public List<PersonPiece> PersonPieces => _personPieces;
         public string TeamName => _teamName;
@@ -44,6 +48,8 @@ namespace Bentengan
                 person.Name = $"{TeamName}_{TEAM_PERSON_SUFFIX}";
                 person.TeamName = TeamName;
                 person.CellPosition = _initPersonPiecePos[i];
+                person.IncreaseLivetime(_initPersonPieceLiveTime[i]);
+                person.SetIsCaptured(_initPersonPieceIsCaptured[i]);
                 person.MovementArea = new int[]
                 {
                     l - 1,  l, l + 1,
