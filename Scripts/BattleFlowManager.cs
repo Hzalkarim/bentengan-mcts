@@ -77,7 +77,7 @@ namespace Bentengan
             }
         }
 
-        public void SendRescueeToCastle(PersonPieceData rescuee, ArenaData arena)
+        public void RegisterRescueeToCastle(PersonPieceData rescuee, ArenaData arena)
         {
             int emptyCastle = FindOwnEmptyCastle(rescuee, arena);
             //GD.Print($"{rescuee.cellPosition} rescued");
@@ -98,7 +98,7 @@ namespace Bentengan
                     {
                         if (!rescuee.isCaptured) continue;
                         bool isRescue = Evaluator.CheckTeammateRescue(rescuee.cellPosition, rescuer.cellPosition, rescuer.CaptureArea,
-                            (idx) => SendRescueeToCastle(rescuee, arena));
+                            (idx) => RegisterRescueeToCastle(rescuee, arena));
 
                         if (isRescue)
                             gameplayHighlightEvent?.Invoke(rescuee.teamName, GameplayHighlight.PersonRescued);
@@ -120,7 +120,7 @@ namespace Bentengan
             return emptyJail;
         }
 
-        public void SendCapturedToJail(PersonPieceData captured, ArenaData arena)
+        public void RegisterCapturedToJail(PersonPieceData captured, ArenaData arena)
         {
             int emptyJail = FindOpponentEmptyJail(captured, arena);
             //GD.Print($"{captured.cellPosition} captured");
@@ -138,19 +138,39 @@ namespace Bentengan
                     bool isCaptured = Evaluator.CheckPersonPieceCapture(personA, personB,
                         (int i) =>
                         {
-                            if (i == personA.cellPosition)
+                            if (i == personA.cellPosition && i == personB.cellPosition)
                             {
-                                SendCapturedToJail(personA, arena);
-                                gameplayHighlightEvent?.Invoke(personA.teamName, GameplayHighlight.PersonCaptured);
+                                if (personA.liveTime == personB.liveTime)
+                                {
+                                    SendToJail(personA, arena);
+                                    SendToJail(personB, arena);
+                                }
+                                else if (personA.liveTime > personB.liveTime)
+                                {
+                                    SendToJail(personA, arena);
+                                }
+                                else
+                                {
+                                    SendToJail(personB, arena);
+                                }
                             }
+                            else if (i == personA.cellPosition)
+                            {
+                                SendToJail(personA, arena);
+                            }                            
                             else if (i == personB.cellPosition)
                             {
-                                SendCapturedToJail(personB, arena);
-                                gameplayHighlightEvent?.Invoke(personB.teamName, GameplayHighlight.PersonCaptured);
+                                SendToJail(personB, arena);
                             }
                         });
                 }
             }
+        }
+
+        private void SendToJail(PersonPieceData p, ArenaData arena)
+        {
+            RegisterCapturedToJail(p, arena);
+            gameplayHighlightEvent?.Invoke(p.teamName, GameplayHighlight.PersonCaptured);
         }
 
         public void UpdateAllPersonPieceInvalidMovement(int pos, int arenaLength, int arenaHeight, Action<int[]> onUpdate)

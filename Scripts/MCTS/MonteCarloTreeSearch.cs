@@ -22,6 +22,8 @@ namespace Bentengan.Mcts
         [Export]
         private bool _isOnePerson;
         [Export]
+        private bool _isRoleBased;
+        [Export]
         private int _limitVisit;
         [Export]
         private bool _initOnReady;
@@ -67,9 +69,11 @@ namespace Bentengan.Mcts
             Root = new MctsNode();
 
             if (_isOnePerson)
-                _strategyCross = StrategyExpansionHelper.Instance.RoleBasedOnePerson;
+                _strategyCross = _isRoleBased ? StrategyExpansionHelper.Instance.RoleBasedOnePerson
+                    : StrategyExpansionHelper.Instance.CompleteOnePerson;
             else
-                _strategyCross = StrategyExpansionHelper.Instance.RoleBased;
+                _strategyCross = _isRoleBased ? StrategyExpansionHelper.Instance.RoleBased
+                    : StrategyExpansionHelper.Instance.Complete;
 
             _simulatedArena = GetNode<SimulatedArena>("../SimulatedArena");
             //_simArenaManager = GetNode<SimulatedArenaManager>("/root/Main/SimulatedArenaManager");

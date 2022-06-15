@@ -4,7 +4,7 @@
 
 [node name="Teams" type="Node2D"]
 
-[node name="PlayerTeam" type="Node2D" parent="."]
+[node name="TopTeam" type="Node2D" parent="."]
 position = Vector2( 65, 57 )
 script = ExtResource( 1 )
 _castleAreaColor = Color( 0.819608, 0.933333, 0.815686, 1 )
@@ -15,7 +15,7 @@ _initPersonPiecePos = [ 31, 21, 31 ]
 _initPersonPieceLiveTime = [ 0, 0, 0 ]
 _initPersonPieceIsCaptured = [ false, false, false ]
 
-[node name="AITeam" type="Node2D" parent="."]
+[node name="BottomTeam" type="Node2D" parent="."]
 position = Vector2( 65, 57 )
 script = ExtResource( 1 )
 _castleAreaColor = Color( 1, 0.862745, 0.862745, 1 )

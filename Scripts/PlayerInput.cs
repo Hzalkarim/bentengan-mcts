@@ -136,34 +136,28 @@ namespace Bentengan
             
             _arena.UpdateAllPersonPieceLiveTime();
 
-            _roundTimer.Connect("timeout", this, "UpdateRescuee");
+            _roundTimer.Connect("timeout", this, "UpdateRescuee", flags: 4);
             _roundTimer.Start();
         }
 
         private void UpdateRescuee()
         {
-            _roundTimer.Disconnect("timeout", this, "UpdateRescuee");
-
             _arena.SendAllRescueeToCastle();
             _arena.UpdateAllPersonPieceInvalidMovement();
 
-            _roundTimer.Connect("timeout", this, "UpdateCaptured");
+            _roundTimer.Connect("timeout", this, "UpdateCaptured", flags: 4);
             _roundTimer.Start();
         }
         private void UpdateCaptured()
         {
-            _roundTimer.Disconnect("timeout", this, "UpdateCaptured");
-
             _arena.SendAllCapturedToJail();
             _arena.UpdateAllPersonPieceInvalidMovement();
 
-            _roundTimer.Connect("timeout", this, "UpdateAiTree");
+            _roundTimer.Connect("timeout", this, "UpdateAiTree", flags: 4);
             _roundTimer.Start();
         }
         private void UpdateAiTree()
         {
-            _roundTimer.Disconnect("timeout", this, "UpdateAiTree");
-
             OnSimStart();
             if (_firstTeamUseAgent)
                 _firstTeamAgent.GenerateTree();

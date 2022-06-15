@@ -6,32 +6,5 @@
 
 [node name="Main" parent="." instance=ExtResource( 1 )]
 
-[node name="PlayerTeam" parent="Main/TeamPositionings/Default" index="0"]
-_teamName = "Player"
-_initPersonPiecePos = [ 31 ]
-_initPersonPieceLiveTime = [ 0 ]
-_initPersonPieceIsCaptured = [ false ]
-
-[node name="AITeam" parent="Main/TeamPositionings/Default" index="1"]
-_teamName = "AI"
-
-[node name="FirstAgent" parent="Main/Agents" index="0"]
-_teamName = "Player"
-_teamNodeName = "PlayerTeam"
-
-[node name="SimulatedArena" parent="Main/Agents/FirstAgent/MCTS" index="2"]
-_arenaPathFromRoot = "/root/LevelSelector/Main"
-
-[node name="MCTS" parent="Main/Agents/FirstAgent/MCTS" index="3"]
-_teamName = "Player"
-_isOnePerson = true
-
-[node name="SimulatedArena" parent="Main/Agents/FirstAgent/MCTS_ForOpponent" index="2"]
-_arenaPathFromRoot = "/root/LevelSelector/Main"
-
-[node name="MCTS" parent="Main/Agents/FirstAgent/MCTS_ForOpponent" index="3"]
-_teamName = "AI"
-
 [editable path="Main"]
 [editable path="Main/TeamPositionings/Default"]
-[editable path="Main/Agents/FirstAgent"]

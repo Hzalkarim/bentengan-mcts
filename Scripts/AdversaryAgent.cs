@@ -68,7 +68,10 @@ namespace Bentengan
             if (_pickedNode == null) return;
             int[] movement = _arena.ToData().personPieceDatas
                 .Where(p => p.teamName.Equals(_teamName)).Select(q => q.cellPosition).ToArray();
-            GD.Print(_pickedNode.ToString());
+
+            var childs = _mcts.Root.childs.Select(c => c.ToString()).Take(5);
+            var allChild = string.Join(", ", childs);
+            GD.Print($"Root child count: {_mcts.Root.childs.Count}, all:{allChild}, best: {_pickedNode.ToString()}" );
             for (int i = 0; i < movement.Length; i++)
             {
                 _arena.TryRegisterMove(_teamName, movement[i], _pickedNode.registeredMove[i]);

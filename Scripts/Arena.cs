@@ -41,11 +41,11 @@ namespace Bentengan
             _battleFlowManager = GetNode<BattleFlowManager>("../BattleFlowManager");
             GenerateCell();
 
-            var playerTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/PlayerTeam");
+            var playerTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/TopTeam");
             playerTeam.Init(this, true);
             _teams.Add(playerTeam);
 
-            var aiTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/AITeam");
+            var aiTeam = GetNode<Team>($"../TeamPositionings/{_teamPositioning}/BottomTeam");
             aiTeam.Init(this);
             _teams.Add(aiTeam);
 
@@ -142,32 +142,46 @@ namespace Bentengan
             PersonPiece person = null;
             PersonPiece[] duo = _allPersons.Where(p => p.CellPosition == from).ToArray();
             if (duo.Count() == 0)
+            {
+                GD.Print("Cell zero occupied");
                 return;
+            }
             else if (duo.Count() == 1)
             {
+                GD.Print("Cell single occupied");
                 person = duo[0];
             }
             else
             {
+                GD.Print("Cell double occupied");
                 IncreaseRed(from);
                 if (duo[0].LiveTime == duo[1].LiveTime)
                 {
                     SendToJail(duo[0]);
                     SendToJail(duo[1]);
+                    GD.Print("Double send jail");
+
+                    return;
                 }
                 else if (duo[0].LiveTime > duo[1].LiveTime)
                 {
-                    SendToJail(duo[0]);
+                    person = duo[0];
+                    GD.Print("send jail 0");
+
                 }
                 else
                 {
-                    SendToJail(duo[1]);
+                    person = duo[1];
+                    GD.Print("send jail 1");
                 }
-                return;
+                //return;
             }
 
-            person.SetArbitraryMove(to);
-            person.ExecuteMove(Cells[to]);
+            if (person != null)
+            {
+                person.SetArbitraryMove(to);
+                person.ExecuteMove(Cells[to]);
+            }
 
             int team = person.TeamName.Equals(Teams[0].TeamName) ? 0 : 1;
             int opponent = team == 0 ? 1 : 0;
@@ -236,7 +250,7 @@ namespace Bentengan
 
         public void SendToJail(PersonPiece person)
         {
-            List<int> jailArea = person.TeamName == Teams[0].TeamName ?
+            List<int> jailArea = person.TeamName.Equals(Teams[0].TeamName) ?
                 Teams[1].JailAreaCellIndex : Teams[0].JailAreaCellIndex;
 
             int[] allPersonPosition = _allPersons.Select(s => s.CellPosition).ToArray();
