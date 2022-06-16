@@ -119,7 +119,7 @@ namespace Bentengan
             if (!_movementArea.Contains(relativeCell) || _invalidMovementArea.Contains(relativeCell)) return false;
 
             _nextMove = nextCell;
-            GD.Print($"PersonPiece Next move set to {_nextMove}");
+            //GD.Print($"PersonPiece Next move set to {_nextMove}");
             return true;
         }
 

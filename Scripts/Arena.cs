@@ -33,6 +33,7 @@ namespace Bentengan
         public int Height => _height;
         public List<Team> Teams => _teams;
         public string TeamPositionings => _teamPositioning;
+        public BattleFlowManager BattleFlowManager => _battleFlowManager;
         
         public override void _Ready()
         {

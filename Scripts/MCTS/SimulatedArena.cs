@@ -149,7 +149,7 @@ namespace Bentengan.Mcts
 
             if (_isSimulating)
             {
-                CastleCaptured();            
+                CheckCastleCaptured();            
                 UpdatePersonLiveTime();
             }
 
@@ -253,9 +253,9 @@ namespace Bentengan.Mcts
 
         public string GetSummary() => _summ.ToString();
 
-        private void CastleCaptured()
+        private void CheckCastleCaptured()
         {
-            _battleFlowManager.CastleCaptured(_arenaData);
+            _battleFlowManager.CheckCastleCaptured(_arenaData);
         }  
 
         private void UpdatePersonLiveTime()

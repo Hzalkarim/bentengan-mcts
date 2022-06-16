@@ -67,9 +67,9 @@ namespace Bentengan
             return castleArea.Intersect(capturerPos).Count() > 0;
         }
 
-        public bool CheckTeamEliminated(int[] persons, int[] opponentJailArea)
+        public bool CheckTeamEliminated(PersonPieceData[] data)
         {
-            return persons.Any(p => !opponentJailArea.Contains(p));
+            return data.All(p => p.isCaptured);
         }
 
         public bool CheckTeammateRescue(int rescuee, int rescuer, int[] rescuerCaptureArea, Action<int> onRescue)

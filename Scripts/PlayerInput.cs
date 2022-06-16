@@ -45,6 +45,7 @@ namespace Bentengan
         {
             //GD.Print("Ready: Player Input");
             _arena = GetNode<Arena>("../Arena");
+            _arena.BattleFlowManager.gameplayHighlightEvent += OnGameplayHighlight;
             var cells = _arena.Cells;
 
             if (_firstTeamUseAgent)
@@ -136,6 +137,8 @@ namespace Bentengan
             
             _arena.UpdateAllPersonPieceLiveTime();
 
+            _arena.BattleFlowManager.CheckCastleCaptured(_arena.ToData());
+
             _roundTimer.Connect("timeout", this, "UpdateRescuee", flags: 4);
             _roundTimer.Start();
         }
@@ -152,6 +155,8 @@ namespace Bentengan
         {
             _arena.SendAllCapturedToJail();
             _arena.UpdateAllPersonPieceInvalidMovement();
+
+            _arena.BattleFlowManager.CheckTeamEliminated(_arena.ToData());
 
             _roundTimer.Connect("timeout", this, "UpdateAiTree", flags: 4);
             _roundTimer.Start();
@@ -231,6 +236,11 @@ namespace Bentengan
         {
             _roundCount++;
             _timerProgressBar.Value = _roundCount * 100 / _firstTeamAgent.Mcts.LimitVisit;
+        }
+
+        private void OnGameplayHighlight(string team, GameplayHighlight highlight)
+        {
+            GD.Print($"{team} {highlight.ToString()}");
         }
     }
 

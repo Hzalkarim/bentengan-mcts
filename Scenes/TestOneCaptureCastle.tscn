@@ -53,9 +53,9 @@ _initPersonPieceIsCaptured = [ false ]
 [node name="BottomTeam" parent="TeamPositionings/Default" index="1"]
 _teamName = "Opponent"
 _castleAreaColor = Color( 1, 0.552941, 0.552941, 1 )
-_initPersonPiecePos = [ 51, 65, 85, 119 ]
-_initPersonPieceLiveTime = [ 3, 3, 3, 3 ]
-_initPersonPieceIsCaptured = [ false, false, false, false ]
+_initPersonPiecePos = [  ]
+_initPersonPieceLiveTime = [  ]
+_initPersonPieceIsCaptured = [  ]
 
 [node name="Agents" type="Node2D" parent="."]
 
@@ -65,10 +65,15 @@ _teamNodeName = "TopTeam"
 _mctsNodeName = "MCTS"
 _mctsOpponentNodeName = "MCTS_ForOpponent"
 
+[node name="SimulatedArena" parent="Agents/FirstAgent/MCTS" index="2"]
+_arenaPathFromRoot = "/root/LevelSelector/Main"
+
 [node name="MCTS" parent="Agents/FirstAgent/MCTS" index="3"]
 _teamName = "Tested"
 _isOnePerson = true
-_isRoleBased = true
+
+[node name="SimulatedArena" parent="Agents/FirstAgent/MCTS_ForOpponent" index="2"]
+_arenaPathFromRoot = "/root/LevelSelector/Main"
 
 [node name="MCTS" parent="Agents/FirstAgent/MCTS_ForOpponent" index="3"]
 _teamName = "Opponent"

@@ -32,7 +32,7 @@ namespace Bentengan
             return emptyCastle;
         }
 
-        public void CastleCaptured(ArenaData arena)
+        public void CheckCastleCaptured(ArenaData arena)
         {
             bool firstTeamWin = Evaluator.CheckCastleCapture(
                 arena.teamDatas[1].castleArea,
@@ -43,6 +43,28 @@ namespace Bentengan
                 arena.teamDatas[0].castleArea,
                 arena.personPieceDatas.Where(p => p.teamName.Equals(arena.teamDatas[1].teamName))
                     .Select(i => i.cellPosition).ToArray());
+
+            if (firstTeamWin && secondTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke("Game", GameplayHighlight.GameDraw);
+            }
+            else if (firstTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke(arena.teamDatas[0].teamName, GameplayHighlight.GameWon);
+            }
+            else if (secondTeamWin)
+            {
+                gameplayHighlightEvent?.Invoke(arena.teamDatas[1].teamName, GameplayHighlight.GameWon);
+            }
+        }
+
+        public void CheckTeamEliminated(ArenaData arena)
+        {
+            bool firstTeamWin = Evaluator.CheckTeamEliminated(
+                arena.personPieceDatas.Where(p => !p.teamName.Equals(arena.teamDatas[0].teamName)).ToArray());
+
+            bool secondTeamWin = Evaluator.CheckTeamEliminated(
+                arena.personPieceDatas.Where(p => !p.teamName.Equals(arena.teamDatas[1].teamName)).ToArray());
 
             if (firstTeamWin && secondTeamWin)
             {
