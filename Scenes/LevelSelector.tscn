@@ -5,3 +5,8 @@
 [node name="LevelSelector" type="Node2D"]
 
 [node name="Main" parent="." instance=ExtResource( 1 )]
+
+[editable path="Main"]
+[editable path="Main/TeamPositionings/Default"]
+[editable path="Main/Agents/FirstAgent"]
+[editable path="Main/Agents/SecondAgent"]

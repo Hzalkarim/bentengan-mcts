@@ -118,13 +118,6 @@ namespace Bentengan
 
         public void ExecuteAllPersonMoves()
         {
-            // Teams.ForEach(t => 
-            //     t.PersonPieces.ForEach(p => 
-            //     {
-            //         if (p.NextMove >= 0)
-            //             p.ExecuteMove(Cells[p.NextMove]);
-            //     }));
-
             _battleFlowManager.ExecuteRegisteredMove(ExecutePersonMove);
         }
 
@@ -213,18 +206,6 @@ namespace Bentengan
 
         public void SendAllCapturedToJail()
         {
-            // Teams[0].PersonPieces.ForEach(p1 =>
-            // {
-            //     Teams[1].PersonPieces.ForEach(p2 =>
-            //         BattleEvaluator.Instance.CheckPersonPieceCapture(
-            //             p1.ToData(), p2.ToData(),
-            //             (int i) => 
-            //             {
-            //                 GD.Print($"Player capture one of MCTS {i}");
-            //                 SendToJail(i);
-            //             }));
-            // });
-
             _battleFlowManager.SendAllCapturedToJail(
                 Teams[0].PersonPieces.Select(p => p.ToData()).ToArray(),
                 Teams[1].PersonPieces.Select(p => p.ToData()).ToArray(),

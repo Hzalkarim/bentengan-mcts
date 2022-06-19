@@ -10,7 +10,6 @@ namespace Bentengan.Mcts
     public class MonteCarloTreeSearch : Node
     {
         private SimulatedArena _simulatedArena;
-        private SimulatedArenaManager _simArenaManager;
         private IEnumerable<MctsStrategy[]> _strategyCross;
 
         private int _frameQuota;
@@ -48,11 +47,6 @@ namespace Bentengan.Mcts
         {
             if (_initOnReady)
                 Init();
-            //IsActive = true;
-            // _simulatedArena.ResetArenaData();
-            // Selection(Root);
-            //Selection(RootAdv);
-
         }
 
         public override void _Process(float delta)
@@ -60,7 +54,6 @@ namespace Bentengan.Mcts
             if (!IsActive) return;
 
             _frameQuota = Mathf.Clamp((int) (_processQuotaFactor / delta), 0, 610);
-            //GD.Print($"Process-Frame quota {_frameQuota}");
             _simulatedArena.RunSimulation(_frameQuota);
         }
 
@@ -76,7 +69,6 @@ namespace Bentengan.Mcts
                     : StrategyExpansionHelper.Instance.Complete;
 
             _simulatedArena = GetNode<SimulatedArena>("../SimulatedArena");
-            //_simArenaManager = GetNode<SimulatedArenaManager>("/root/Main/SimulatedArenaManager");
             _opponentTeamName = _simulatedArena.ArenaData.teamDatas[0].teamName.Equals(_teamName) ? 
                 _simulatedArena.ArenaData.teamDatas[1].teamName :
                 _simulatedArena.ArenaData.teamDatas[0].teamName;
@@ -222,7 +214,6 @@ namespace Bentengan.Mcts
         private void Expansion(MctsNode node)
         {
             var persons = _simulatedArena.ArenaData.personPieceDatas.Where(p => p.teamName.Equals(_teamName)).ToArray();
-            //GD.Print($"Expansion {_teamName}: personLen {persons.Length}");
             StrategyAlgorithmCalculator.SetArenaData(_simulatedArena.ArenaData);
 
             foreach (MctsStrategy[] strat in _strategyCross)
@@ -253,13 +244,9 @@ namespace Bentengan.Mcts
                 _simulatedArena.TryRegisterMove(_teamName, teamPersons[i], node.registeredMove[i]);
             }
             
-            // if (Root.timesVisit % 50 == 0)
-            //     GD.Print($"Start simulation {_teamName}: {Root.timesVisit}");
             _nodeToSimulate = node;
             _simulatedArena.SetActive(true);
             IsActive = true;
-
-            //_simArenaManager.QueueSimulation(_simulatedArena);
         }
 
         private void Backpropagation(MctsNode node, float scoreUpdate)
@@ -320,11 +307,7 @@ namespace Bentengan.Mcts
 
         private void OnSimulationEndWithNoHighlight()
         {
-            //Selection(Root);
             IsActive = false;
-            //GD.Print($"OnSimulationEnd-Frame quota {_frameQuota}");
-            // if (_frameQuota <= 0)
-            //     IsActive = true;
 
             if (_nodeToSimulate == null) return;
             Backpropagation(_nodeToSimulate, 0f);

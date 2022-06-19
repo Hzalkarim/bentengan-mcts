@@ -60,13 +60,6 @@ namespace Bentengan.Mcts
             _arenaData = _arena.ToData();
         }
 
-        // public override void _Process(float delta)
-        // {
-        //     if (!_isActive) return;
-
-        //     RunSimulation((int)(_simulationFactorConstant / delta));
-        // }
-
         public void SetActive(bool isActive)
         {
             _isActive = isActive;
@@ -181,8 +174,6 @@ namespace Bentengan.Mcts
 
         public void RunSimulation(int times)
         {
-            //GD.Print("Similation started");
-            //_arenaData = _arena.ToData();
             if (!IsActive) return;
 
             int i = 0;
@@ -212,10 +203,6 @@ namespace Bentengan.Mcts
                 onSimulationEndWithNoHighlightEvent?.Invoke();
                 _isSimulating = false;
             }
-
-            // if (i < times && !_isSimulating)
-            //     RunSimulation(times - i);
-            //GD.Print($"Simulation End. Round count: {i}");
         }
 
         public void RegisterRandomTeamMove(string teamName)

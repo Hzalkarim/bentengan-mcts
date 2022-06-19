@@ -43,7 +43,6 @@ namespace Bentengan
 
         public override void _Ready()
         {
-            //GD.Print("Ready: Player Input");
             _arena = GetNode<Arena>("../Arena");
             _arena.BattleFlowManager.gameplayHighlightEvent += OnGameplayHighlight;
             var cells = _arena.Cells;
@@ -52,12 +51,6 @@ namespace Bentengan
                 _firstTeamAgent = GetNode<AdversaryAgent>($"../Agents/{_firstTeamAgentNodeName}");
             if (_secondTeamUseAgent)
                 _secondTeamAgent = GetNode<AdversaryAgent>($"../Agents/{_secondTeamAgentNodeName}");
-            //_simulatedArena = GetNode<SimulatedArena>("../Agents/SimulatedArena");
-
-            // foreach (Cell cell in cells)
-            // {
-            //     cell.OnClickedEvent += OnCellClicked;
-            // }
 
             var buttons = GetNode("../Control/Buttons");
             buttons.GetNode<BaseButton>("SimulationTrigger").Connect("button_up", this, "OnSimulationTriggerButtonClicked");
@@ -83,16 +76,6 @@ namespace Bentengan
 
             _timer.Start();
         }
-
-        // private void OnPlayerButtonClicked()
-        // {
-        //     _selectingTeamName = "Player";
-        // }
-
-        // private void OnAiButtonClicked()
-        // {
-        //     _selectingTeamName = "MCTS";
-        // }
 
         private void OnSimulationTriggerButtonClicked()
         {
@@ -121,16 +104,11 @@ namespace Bentengan
         {
             _executeButton.Disabled = true;
             _timer.Start();
-            //_opponentAgent.RegisterRandomMove();
 
             if (_firstTeamUseAgent)
                 _firstTeamAgent.RegisterBestMove();
             if (_secondTeamUseAgent)
                 _secondTeamAgent.RegisterBestMove();
-            // if (_isRandom)
-            //     _playerAgent.RegisterRandomMove();
-
-            //_arena.FillColorPrevCell();
 
             _arena.ExecuteAllPersonMoves();
             _arena.UpdateAllPersonPieceInvalidMovement();
@@ -184,8 +162,6 @@ namespace Bentengan
                 //GD.Print(cell.Index - _personPieceSelected.CellPosition);
                 if (_validMoveArea.Contains(cell.Index))
                 {
-                    //GD.Print($"Can Move from {_personPieceSelected.CellPosition} to {cell.Index}");
-                    //_personPieceSelected.TrySetNextMove(cell.Index);
                     _arena.UnregisterMove(_personPieceSelected.CellPosition);
                     _arena.TryRegisterMove(_personPieceSelected.TeamName, _personPieceSelected.CellPosition, cell.Index);
                 }
@@ -199,7 +175,6 @@ namespace Bentengan
             }
             else if (Phase == PlayerInputPhase.Selecting)
             {
-                //GD.Print("HEHEH");
                 PersonPiece person = 
                     cell.GetNodeOrNull<PersonPiece>($"{SelectingTeamName}_{Team.TEAM_PERSON_SUFFIX}");
                 if (person == null) return;
@@ -222,7 +197,6 @@ namespace Bentengan
 
         private void OnTimerTick()
         {
-            //_executeButton.Disabled = false;
             OnExecuteButtonClicked();
         }
 
